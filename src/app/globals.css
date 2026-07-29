@@ -24,3 +24,29 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+@media print {
+  /* Sembunyikan semua elemen aplikasi kasir saat print */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Hanya tampilkan elemen area cetak struk */
+  .receipt-print-area, .receipt-print-area * {
+    visibility: visible;
+  }
+
+  /* Atur posisi struk ke pojok kiri atas kertas */
+  .receipt-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 58mm; /* Sesuaikan 58mm atau 80mm sesuai kertas printer thermal */
+    margin: 0;
+    padding: 4px;
+  }
+
+  @page {
+    size: auto;
+    margin: 0mm;
+  }
+}
