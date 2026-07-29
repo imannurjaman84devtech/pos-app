@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link' // <--- Tambahan import Link
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabaseClient'
 
@@ -86,11 +87,22 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/30 transition disabled:bg-slate-300 mt-2"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/30 transition disabled:bg-slate-300 mt-2 cursor-pointer"
           >
             {loading ? 'Verifikasi Akun...' : 'Masuk ke Aplikasi 🚀'}
           </button>
         </form>
+
+        {/* Link ke Halaman Registrasi */}
+        <div className="text-center mt-6 text-sm text-slate-600">
+          Belum memiliki akun toko?{' '}
+          <Link 
+            href="/register" 
+            className="text-blue-600 hover:text-blue-800 font-semibold underline underline-offset-2 transition"
+          >
+            Daftar Toko Baru
+          </Link>
+        </div>
 
         <div className="mt-8 text-center border-t pt-4">
           <p className="text-[11px] text-slate-400">
