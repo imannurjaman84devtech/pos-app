@@ -1,8 +1,21 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabaseClient'
 import { Product } from '@/types/pos'
+import { Html5QrcodeScanner } from 'html5-qrcode'
+import { 
+  Plus, 
+  Package, 
+  Barcode, 
+  Trash2, 
+  Camera, 
+  X, 
+  Loader2, 
+  Sparkles,
+  Layers,
+  CheckCircle2
+} from 'lucide-react'
 
 interface UnitInput {
   unit_name: string
@@ -18,12 +31,14 @@ export default function ProductsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  // Form State untuk Produk Baru
+  // State untuk Camera Scanner Modal
+  const [isScannerOpen, setIsScannerOpen] = useState(false)
+
+  // Form State
   const [name, setName] = useState('')
   const [barcode, setBarcode] = useState('')
   const [initialStock, setInitialStock] = useState<number>(0)
   
-  // State untuk Dynamic Product Units (Default 1 Base Unit + 1 Grosir Unit)
   const [units, setUnits] = useState<UnitInput[]>([
     { unit_name: 'Pcs', conversion_factor: 1, price: 5000, is_base_unit: true },
     { unit_name: 'Dus', conversion_factor: 24, price: 110000, is_base_unit: false }
@@ -32,6 +47,47 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchProducts()
   }, [])
+
+  // Ref & Effect untuk Scanner Kamera HP
+  useEffect(() => {
+    let scanner: Html5QrcodeScanner | null = null;
+
+    if (isScannerOpen) {
+      // Delay mikro agar elemen DOM #reader siap
+      setTimeout(() => {
+        scanner = new Html5QrcodeScanner(
+          "reader",
+          { fps: 10, qrbox: { width: 250, height: 150 } },
+          /* verbose= */ false
+        );
+
+        scanner.render(
+          (decodedText) => {
+            // Suara Beep/Ting-tung saat scan berhasil
+            try {
+              const audio = new Audio('/sounds/beep.mp3');
+              audio.play();
+            } catch (e) {
+              console.log('Audio error/not found');
+            }
+
+            setBarcode(decodedText);
+            setIsScannerOpen(false);
+            if (scanner) scanner.clear();
+          },
+          (errorMessage) => {
+            // Mengabaikan error scan biasa saat kamera belum nge-fit
+          }
+        );
+      }, 300);
+    }
+
+    return () => {
+      if (scanner) {
+        scanner.clear().catch(err => console.error("Failed to clear scanner", err));
+      }
+    };
+  }, [isScannerOpen]);
 
   const fetchProducts = async () => {
     setLoading(true)
@@ -45,7 +101,6 @@ export default function ProductsPage() {
     setLoading(false)
   }
 
-  // Handle Tambah/Hapus Form Satuan secara Dinamis
   const handleAddUnitInput = () => {
     setUnits([...units, { unit_name: '', conversion_factor: 1, price: 0, is_base_unit: false }])
   }
@@ -64,7 +119,6 @@ export default function ProductsPage() {
     setUnits(updated)
   }
 
-  // Handle Simpan Produk + Satuan ke Database Supabase
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return alert('Nama produk wajib diisi!')
@@ -73,7 +127,6 @@ export default function ProductsPage() {
     setSubmitting(true)
 
     try {
-      // 1. Insert ke tabel products
       const { data: newProd, error: prodErr } = await supabase
         .from('products')
         .insert([{ 
@@ -86,7 +139,6 @@ export default function ProductsPage() {
 
       if (prodErr) throw prodErr
 
-      // 2. Insert ke tabel product_units berelasi ke produk baru
       const unitPayloads = units.map(u => ({
         product_id: newProd.id,
         unit_name: u.unit_name,
@@ -101,8 +153,6 @@ export default function ProductsPage() {
 
       if (unitErr) throw unitErr
 
-      alert('✅ Produk dan Satuan berhasil ditambahkan!')
-      
       // Reset Form & Close Modal
       setName('')
       setBarcode('')
@@ -120,87 +170,124 @@ export default function ProductsPage() {
     }
   }
 
-  const inputStyle = "w-full border border-gray-300 p-2.5 rounded-lg text-gray-900 bg-white focus:outline-blue-500 font-medium text-sm"
+  const inputStyle = "w-full border border-slate-200 bg-slate-50/50 p-2.5 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm placeholder:text-slate-400"
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8 font-sans text-gray-900">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 font-sans text-slate-900">
+      <div className="max-w-6xl mx-auto space-y-6">
+        
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">📦 Katalog Produk Grosir</h1>
-            <p className="text-sm text-gray-500">Kelola master data barang, barcode, dan konversi multi-unit</p>
+            <div className="flex items-center gap-2">
+              <span className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                <Package className="w-6 h-6" />
+              </span>
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Katalog Produk Grosir</h1>
+            </div>
+            <p className="text-xs md:text-sm text-slate-500 mt-1 pl-10">Kelola master data barang, barcode, dan konversi multi-unit secara terpusat</p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-[0.98]"
           >
-            ➕ Tambah Produk Baru
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>Tambah Produk</span>
           </button>
         </div>
 
-        {/* Tabel Daftar Produk */}
-        <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+        {/* Tabel / Content Container */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center text-gray-500 font-semibold">Memuat data produk...</div>
+            <div className="p-12 text-center text-slate-400 flex flex-col items-center gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+              <p className="text-sm font-medium">Memuat katalog produk...</p>
+            </div>
           ) : products.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">Belum ada produk. Klik tombol diatas untuk menambah produk.</div>
+            <div className="p-12 text-center text-slate-500 flex flex-col items-center gap-2">
+              <Sparkles className="w-10 h-10 text-slate-300" />
+              <p className="font-semibold text-slate-700">Belum Ada Produk Tersedia</p>
+              <p className="text-xs text-slate-400 max-w-sm">Mulai tambahkan produk grosir dan atur harga satuannya untuk kemudahan kasir.</p>
+            </div>
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider">
-                  <th className="p-4">Nama Produk / Barcode</th>
-                  <th className="p-4">Total Stok (Base Unit)</th>
-                  <th className="p-4">Harga & Satuan Penjualan</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 text-sm">
-                {products.map(p => (
-                  <tr key={p.id} className="hover:bg-gray-50">
-                    <td className="p-4">
-                      <div className="font-bold text-gray-800">{p.name}</div>
-                      <div className="text-xs text-gray-400 font-mono">Barcode: {p.barcode || '-'}</div>
-                    </td>
-                    <td className="p-4">
-                      <span className="font-bold text-blue-600 text-base">{p.stock_in_base_unit}</span>
-                      <span className="text-xs text-gray-500 ml-1">
-                        ({p.product_units?.find(u => u.is_base_unit)?.unit_name || 'Unit'})
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-wrap gap-2">
-                        {p.product_units?.map(u => (
-                          <div 
-                            key={u.id} 
-                            className={`px-2.5 py-1 rounded-lg border text-xs font-semibold ${
-                              u.is_base_unit 
-                                ? 'bg-blue-50 border-blue-200 text-blue-800' 
-                                : 'bg-green-50 border-green-200 text-green-800'
-                            }`}
-                          >
-                            {u.unit_name} (x{u.conversion_factor}): <strong>Rp {u.price.toLocaleString('id-ID')}</strong>
-                          </div>
-                        ))}
-                      </div>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="p-4 pl-6">Nama Produk / Barcode</th>
+                    <th className="p-4">Stok Utama (Base)</th>
+                    <th className="p-4 pr-6">Pengaturan Satuan & Harga</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-sm">
+                  {products.map(p => (
+                    <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="p-4 pl-6">
+                        <div className="font-bold text-slate-800">{p.name}</div>
+                        <div className="inline-flex items-center gap-1 text-xs text-slate-400 font-mono mt-0.5">
+                          <Barcode className="w-3.5 h-3.5" />
+                          <span>{p.barcode || 'Tanpa Barcode'}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="inline-flex items-baseline gap-1 bg-slate-100/80 px-3 py-1 rounded-lg">
+                          <span className="font-bold text-slate-800 text-base">{p.stock_in_base_unit}</span>
+                          <span className="text-xs font-medium text-slate-500">
+                            {p.product_units?.find(u => u.is_base_unit)?.unit_name || 'Unit'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4 pr-6">
+                        <div className="flex flex-wrap gap-2">
+                          {p.product_units?.map(u => (
+                            <div 
+                              key={u.id} 
+                              className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                                u.is_base_unit 
+                                  ? 'bg-indigo-50/60 border-indigo-200/80 text-indigo-900' 
+                                  : 'bg-emerald-50/60 border-emerald-200/80 text-emerald-900'
+                              }`}
+                            >
+                              <span className="font-semibold">{u.unit_name}</span>
+                              <span className="text-slate-400 mx-1.5">|</span>
+                              <span className="text-slate-500">Isi {u.conversion_factor}</span>
+                              <span className="text-slate-400 mx-1.5">|</span>
+                              <strong className="font-bold">Rp {u.price.toLocaleString('id-ID')}</strong>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Modal Form Tambah Produk */}
+      {/* Modal Input Produk Baru */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">Tambah Produk & Multi-Unit Baru</h2>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-40 transition-all">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-100">
+            
+            <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Tambah Produk & Satuan Grosir</h2>
+                <p className="text-xs text-slate-500">Lengkapi rincian informasi item dan variasi harganya</p>
+              </div>
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <form onSubmit={handleSaveProduct} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSaveProduct} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Nama Produk *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Nama Produk *</label>
                   <input
                     type="text"
                     required
@@ -211,19 +298,29 @@ export default function ProductsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Barcode / SKU (Opsional)</label>
-                  <input
-                    type="text"
-                    placeholder="Contoh: 899886620011"
-                    value={barcode}
-                    onChange={e => setBarcode(e.target.value)}
-                    className={inputStyle}
-                  />
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Barcode / SKU (Opsional)</label>
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      placeholder="Scan/Ketik Barcode..."
+                      value={barcode}
+                      onChange={e => setBarcode(e.target.value)}
+                      className={`${inputStyle} pr-10`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsScannerOpen(true)}
+                      className="absolute right-2 p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition"
+                      title="Scan lewat Kamera HP"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Stok Awal (Dalam Satuan Dasar/Eceran)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Stok Awal (Dalam Satuan Dasar/Eceran)</label>
                 <input
                   type="number"
                   min="0"
@@ -234,27 +331,31 @@ export default function ProductsPage() {
               </div>
 
               {/* Dynamic Unit Form */}
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-bold text-gray-800">Pengaturan Satuan & Harga Jual *</label>
+              <div className="pt-2">
+                <div className="flex justify-between items-center mb-3">
+                  <div className="flex items-center gap-1.5">
+                    <Layers className="w-4 h-4 text-indigo-600" />
+                    <label className="block text-xs font-bold text-slate-800">Pengaturan Multi-Satuan & Harga *</label>
+                  </div>
                   <button
                     type="button"
                     onClick={handleAddUnitInput}
-                    className="text-xs bg-gray-100 hover:bg-gray-200 text-blue-600 font-bold px-2.5 py-1 rounded-lg border transition"
+                    className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100/70 font-semibold px-3 py-1.5 rounded-xl transition"
                   >
-                    + Tambah Satuan (Grosir/Pak/Dus)
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Tambah Satuan Grosir</span>
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {units.map((unit, idx) => (
-                    <div key={idx} className="flex items-center gap-2 bg-gray-50 p-3 rounded-xl border border-gray-200">
-                      <div className="w-1/4">
-                        <label className="block text-[10px] text-gray-500 font-bold">Nama Satuan</label>
+                    <div key={idx} className="flex items-center gap-2 bg-slate-50/80 p-3 rounded-2xl border border-slate-200/70">
+                      <div className="w-1/3">
+                        <label className="block text-[10px] text-slate-400 font-bold mb-1">Satuan</label>
                         <input
                           type="text"
                           required
-                          placeholder="Pcs/Dus/Pak"
+                          placeholder="Pcs/Dus"
                           value={unit.unit_name}
                           onChange={e => handleUnitChange(idx, 'unit_name', e.target.value)}
                           className={inputStyle}
@@ -262,7 +363,7 @@ export default function ProductsPage() {
                       </div>
 
                       <div className="w-1/4">
-                        <label className="block text-[10px] text-gray-500 font-bold">Isi (Konversi Base)</label>
+                        <label className="block text-[10px] text-slate-400 font-bold mb-1">Isi (Pcs)</label>
                         <input
                           type="number"
                           min="1"
@@ -270,12 +371,12 @@ export default function ProductsPage() {
                           disabled={unit.is_base_unit}
                           value={unit.conversion_factor}
                           onChange={e => handleUnitChange(idx, 'conversion_factor', Number(e.target.value))}
-                          className={`${inputStyle} ${unit.is_base_unit ? 'bg-gray-100 text-gray-500' : ''}`}
+                          className={`${inputStyle} ${unit.is_base_unit ? 'opacity-60 cursor-not-allowed' : ''}`}
                         />
                       </div>
 
                       <div className="w-1/3">
-                        <label className="block text-[10px] text-gray-500 font-bold">Harga Jual (Rp)</label>
+                        <label className="block text-[10px] text-slate-400 font-bold mb-1">Harga (Rp)</label>
                         <input
                           type="number"
                           min="0"
@@ -286,15 +387,15 @@ export default function ProductsPage() {
                         />
                       </div>
 
-                      <div className="w-1/6 flex justify-end items-end h-full pt-4">
+                      <div className="w-10 flex justify-center items-end h-full pt-4">
                         {!unit.is_base_unit && (
                           <button
                             type="button"
                             onClick={() => handleRemoveUnitInput(idx)}
-                            className="text-red-500 hover:bg-red-50 p-2 rounded-lg font-bold text-sm"
+                            className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition"
                             title="Hapus Satuan"
                           >
-                            🗑️
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                       </div>
@@ -304,26 +405,50 @@ export default function ProductsPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 justify-end pt-4 border-t">
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border font-bold text-gray-600 hover:bg-gray-100 text-sm"
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 font-semibold text-slate-600 hover:bg-slate-50 text-sm transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md transition disabled:bg-gray-300"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-100 transition disabled:opacity-50"
                 >
-                  {submitting ? 'Menyimpan...' : 'Simpan Produk'}
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>{submitting ? 'Menyimpan...' : 'Simpan Produk'}</span>
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Modal Kamera Barcode Scanner */}
+      {isScannerOpen && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl relative text-center">
+            <button
+              onClick={() => setIsScannerOpen(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <h3 className="font-bold text-slate-800 text-lg mb-1">Arahkan ke Barcode</h3>
+            <p className="text-xs text-slate-500 mb-4">Posisikan kode batang di tengah kotak kamera</p>
+            
+            {/* Element Tempat Kamera HTML5-QRCode Render */}
+            <div id="reader" className="overflow-hidden rounded-2xl border-2 border-indigo-500"></div>
+
+            <p className="text-[11px] text-slate-400 mt-4">Pindaian akan memicu bunyi bip dan otomatis mengisi kolom barcode.</p>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
