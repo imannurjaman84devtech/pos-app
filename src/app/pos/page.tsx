@@ -17,7 +17,8 @@ import {
   X,
   Trash2,
   Building2,
-  FileText
+  FileText,
+  QrCode
 } from 'lucide-react'
 
 interface CartItem {
@@ -32,6 +33,15 @@ interface Customer {
   name: string
   phone?: string
   total_debt?: number
+}
+
+// Interface untuk Tabel Baru store_accounts
+interface StoreAccount {
+  id: string
+  account_name: string
+  account_number: string
+  holder_name: string
+  qris_image_url?: string | null
 }
 
 interface CompletedSale {
@@ -59,6 +69,7 @@ export default function POSPage() {
   const supabase = createClient()
   const [products, setProducts] = useState<Product[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [storeAccounts, setStoreAccounts] = useState<StoreAccount[]>([])
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -68,8 +79,8 @@ export default function POSPage() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer' | 'kasbon'>('cash')
   const [paymentAmount, setPaymentAmount] = useState<number>(0)
   
-  // State Tambahan Khusus Transfer
-  const [selectedBank, setSelectedBank] = useState<string>('BCA')
+  // State Dinamis Rekening / QRIS
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('')
   const [transferRef, setTransferRef] = useState<string>('')
 
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('')
@@ -89,6 +100,7 @@ export default function POSPage() {
     fetchProducts()
     fetchCustomers()
     fetchStoreSettings()
+    fetchStoreAccounts()
   }, [])
 
   // Auto-focus input barcode dengan tombol ESC
@@ -123,6 +135,19 @@ export default function POSPage() {
   const fetchStoreSettings = async () => {
     const { data } = await supabase.from('store_settings').select('*').single()
     if (data) setStoreSettings(data)
+  }
+
+  // Fetch Data Rekening & QRIS Dinamis dari DB
+  const fetchStoreAccounts = async () => {
+    const { data } = await supabase
+      .from('store_accounts')
+      .select('*')
+      .eq('is_active', true)
+    
+    if (data && data.length > 0) {
+      setStoreAccounts(data)
+      setSelectedAccountId(data[0].id) // Default pilih opsi pertama
+    }
   }
 
   // Quick Add Customer
@@ -228,6 +253,9 @@ export default function POSPage() {
     setPaymentAmount(grandTotal)
   }
 
+  // Cari objek rekening yang sedang dipilih kasir
+  const currentSelectedAccount = storeAccounts.find(a => a.id === selectedAccountId)
+
   // Process Checkout
   const handleCheckout = async () => {
     if (cart.length === 0) return alert('Keranjang belanja masih kosong!')
@@ -248,9 +276,13 @@ export default function POSPage() {
       const transactionDate = new Date().toLocaleString('id-ID')
       const activeCustomer = customers.find(c => c.id === selectedCustomerId)
 
+      const bankLabel = currentSelectedAccount 
+        ? `${currentSelectedAccount.account_name} (${currentSelectedAccount.account_number})`
+        : '-'
+
       // Gabungkan catatan jika transfer
       const finalNotes = paymentMethod === 'transfer' 
-        ? `[Transfer ${selectedBank}${transferRef ? ` - Ref: ${transferRef}` : ''}] ${notes}`.trim()
+        ? `[Payment via ${bankLabel}${transferRef ? ` - Ref/Pengirim: ${transferRef}` : ''}] ${notes}`.trim()
         : notes || null
 
       // 1. Simpan ke Tabel Sales
@@ -306,7 +338,7 @@ export default function POSPage() {
         items: [...cart],
         date: transactionDate,
         paymentMethod,
-        selectedBank: paymentMethod === 'transfer' ? selectedBank : undefined,
+        selectedBank: paymentMethod === 'transfer' ? currentSelectedAccount?.account_name : undefined,
         transferRef: paymentMethod === 'transfer' ? transferRef : undefined,
         customerName: activeCustomer?.name,
         dueDate
@@ -438,7 +470,6 @@ export default function POSPage() {
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-xs text-white truncate">{item.product.name}</h4>
                       <div className="flex items-center gap-2 mt-1.5">
-                        {/* Select Unit Conversion */}
                         <select
                           value={item.selectedUnit.id}
                           onChange={e => handleUnitChange(idx, e.target.value)}
@@ -456,7 +487,6 @@ export default function POSPage() {
                       </div>
                     </div>
 
-                    {/* Qty Counter */}
                     <div className="flex items-center gap-2">
                       <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg overflow-hidden">
                         <button
@@ -534,7 +564,7 @@ export default function POSPage() {
                     : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
                 }`}
               >
-                <CreditCard className="w-3.5 h-3.5" /> Transfer
+                <CreditCard className="w-3.5 h-3.5" /> Transfer / QRIS
               </button>
               <button
                 type="button"
@@ -593,7 +623,7 @@ export default function POSPage() {
             ) : (
               <div className="space-y-2.5">
                 
-                {/* TAMBAHAN FORM VALIDASI UNTUK METODE TRANSFER */}
+                {/* FORM TRANSFER / QRIS DINAMIS DARI DATABASE */}
                 {paymentMethod === 'transfer' && (
                   <div className="bg-indigo-500/10 border border-indigo-500/30 p-3 rounded-xl space-y-2 text-xs">
                     <div>
@@ -601,16 +631,38 @@ export default function POSPage() {
                         <Building2 className="w-3 h-3" /> Rekening / QRIS Tujuan
                       </label>
                       <select
-                        value={selectedBank}
-                        onChange={e => setSelectedBank(e.target.value)}
+                        value={selectedAccountId}
+                        onChange={e => setSelectedAccountId(e.target.value)}
                         className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 font-semibold text-white focus:outline-none focus:border-indigo-500"
                       >
-                        <option value="BCA">BCA - 1234567890 (a.n Toko)</option>
-                        <option value="Mandiri">Mandiri - 0987654321 (a.n Toko)</option>
-                        <option value="BRI">BRI - 5678901234 (a.n Toko)</option>
-                        <option value="QRIS">QRIS Statis Toko</option>
+                        {storeAccounts.length === 0 ? (
+                          <option value="">Tidak ada akun terdaftar</option>
+                        ) : (
+                          storeAccounts.map((acc) => (
+                            <option key={acc.id} value={acc.id}>
+                              {acc.account_name} - {acc.account_number} ({acc.holder_name})
+                            </option>
+                          ))
+                        )}
                       </select>
                     </div>
+
+                    {/* Tampilkan QRIS jika tersedia di Database */}
+                    {currentSelectedAccount?.qris_image_url && (
+                      <div className="bg-white p-2.5 rounded-xl flex flex-col items-center justify-center my-1 text-center shadow">
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-800 mb-1">
+                          <QrCode className="w-3.5 h-3.5 text-indigo-600" /> Scan QRIS di Bawah Ini
+                        </div>
+                        <img 
+                          src={currentSelectedAccount.qris_image_url} 
+                          alt="QRIS Toko" 
+                          className="w-32 h-32 object-contain border border-slate-200 rounded-lg"
+                        />
+                        <span className="text-[10px] font-semibold text-slate-500 mt-1">
+                          {currentSelectedAccount.holder_name}
+                        </span>
+                      </div>
+                    )}
 
                     <div>
                       <label className="text-[11px] font-bold text-indigo-300 mb-1 flex items-center gap-1">
@@ -758,7 +810,7 @@ export default function POSPage() {
 
                 {completedSale.selectedBank && (
                   <div className="flex justify-between text-slate-400">
-                    <span>Bank Tujuan</span>
+                    <span>Tujuan</span>
                     <span className="font-bold text-indigo-400">{completedSale.selectedBank}</span>
                   </div>
                 )}
