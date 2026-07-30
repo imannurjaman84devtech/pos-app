@@ -17,7 +17,7 @@ const menuItems = [
   { name: 'POS Kasir', href: '/pos', icon: ShoppingCart },
   { name: 'Katalog Produk', href: '/products', icon: Package },
   { name: 'Stok / Inventory', href: '/inventory', icon: Warehouse },
-  { name: 'Laporan Transaksi', href: '/transactions', icon: Receipt },
+  { name: 'Laporan Transaksi', href: '/reports', icon: Receipt }, // Fixed: Sesuaikan ke folder /reports
   { name: 'Pelanggan & Hutang', href: '/customers', icon: Users },
   { name: 'Pengaturan', href: '/settings', icon: Settings },
 ]
@@ -56,7 +56,9 @@ export default function Sidebar() {
         <nav className="px-3 space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href
+            // Pintar: Tetap aktif (highlight) kalau user ada di sub-route (contoh: /inventory/restock)
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+
             return (
               <Link
                 key={item.href}
