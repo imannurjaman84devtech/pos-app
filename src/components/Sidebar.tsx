@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabaseClient'
@@ -29,6 +30,65 @@ export default function Sidebar() {
   const router = useRouter()
   const supabase = createClient()
 
+  // State internal untuk dynamic profile
+  const [storeName, setStoreName] = useState<string>('')
+  const [userName, setUserName] = useState<string>('')
+  const [userRole, setUserRole] = useState<string>('')
+  const [loading, setLoading] = useState<boolean>(true)
+
+  useEffect(() => {
+    async function loadUserData() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (user) {
+          // 1. Ekstrak nama user dari metadata atau email
+          const displayName = 
+            user.user_metadata?.full_name || 
+            user.user_metadata?.name || 
+            user.email?.split('@')[0] || 
+            'Kasir Utama'
+
+          setUserName(displayName)
+
+          // 2. Ekstrak nama toko & role (Cek metadata dulu, baru fallback ke DB profiles)
+          const metaStore = user.user_metadata?.store_name || user.user_metadata?.nama_toko
+          const metaRole = user.user_metadata?.role
+
+          if (metaStore) {
+            setStoreName(metaStore)
+            setUserRole(metaRole || 'Admin Toko')
+          } else {
+            // Ambil dari tabel profiles / stores di Supabase jika metadata kosong
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role, stores(name)')
+              .eq('id', user.id)
+              .maybeSingle()
+
+            if (profile) {
+              setUserRole(profile.role || 'Kasir')
+              const storeData = profile.stores as any
+              setStoreName(storeData?.name || 'RUMAH BENTANG')
+            } else {
+              setStoreName('RUMAH BENTANG')
+              setUserRole('Kasir Utama')
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Gagal memuat profil sidebar:', err)
+        setStoreName('RUMAH BENTANG')
+        setUserName('Kasir Utama')
+        setUserRole('Shift Pagi')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadUserData()
+  }, [])
+
   const handleLogout = async () => {
     const confirmLogout = window.confirm('Apakah Anda yakin ingin keluar dari aplikasi?')
     if (confirmLogout) {
@@ -37,6 +97,9 @@ export default function Sidebar() {
       router.refresh()
     }
   }
+
+  // Ambil inisial huruf pertama untuk avatar
+  const avatarInitial = userName ? userName.charAt(0).toUpperCase() : 'K'
 
   return (
     <aside className="w-64 bg-slate-900 text-slate-300 min-h-screen flex flex-col justify-between border-r border-slate-800 shrink-0 hidden md:flex">
@@ -56,12 +119,18 @@ export default function Sidebar() {
 
         {/* Store Indicator */}
         <div className="mx-4 my-4 p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 flex items-center gap-3">
-          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg shrink-0">
             <Store className="w-4 h-4" />
           </div>
           <div className="overflow-hidden">
             <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Toko Aktif</p>
-            <p className="text-xs font-bold text-white truncate">Toko Berkah Grosir</p>
+            {loading ? (
+              <div className="h-4 w-28 bg-slate-700/50 animate-pulse rounded mt-0.5" />
+            ) : (
+              <p className="text-xs font-bold text-white truncate" title={storeName}>
+                {storeName}
+              </p>
+            )}
           </div>
         </div>
 
@@ -95,12 +164,21 @@ export default function Sidebar() {
       {/* Footer Profile & Logout */}
       <div className="p-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="w-9 h-9 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-            K
+          <div className="w-9 h-9 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-white font-bold text-sm shrink-0 uppercase">
+            {avatarInitial}
           </div>
           <div className="overflow-hidden">
-            <p className="text-xs font-bold text-white truncate">Kasir Utama</p>
-            <p className="text-[10px] text-slate-400 truncate">Shift Pagi</p>
+            {loading ? (
+              <div className="space-y-1">
+                <div className="h-3.5 w-20 bg-slate-700/50 animate-pulse rounded" />
+                <div className="h-2.5 w-14 bg-slate-700/40 animate-pulse rounded" />
+              </div>
+            ) : (
+              <>
+                <p className="text-xs font-bold text-white truncate" title={userName}>{userName}</p>
+                <p className="text-[10px] text-slate-400 truncate capitalize">{userRole}</p>
+              </>
+            )}
           </div>
         </div>
 
