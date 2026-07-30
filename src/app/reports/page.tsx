@@ -145,16 +145,16 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 p-4 sm:p-8 font-sans text-slate-100">
+    <div className="min-h-screen bg-slate-950 p-4 sm:p-8 font-sans text-slate-100 print:bg-white print:text-black print:p-0">
       <div className="max-w-6xl mx-auto space-y-6">
         
         {/* Header & Tombol Cetak */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
-              <FileText className="w-6 h-6 text-indigo-500" /> Laporan Penjualan Grosir
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white print:text-black flex items-center gap-2">
+              <FileText className="w-6 h-6 text-indigo-500 print:hidden" /> Laporan Penjualan Grosir
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-slate-400 print:text-slate-600 mt-1">
               Pantau omzet harian, bulanan, tahunan, serta detail transaksi
             </p>
           </div>
@@ -169,7 +169,7 @@ export default function ReportsPage() {
 
         {/* Pesan Error */}
         {errorMessage && (
-          <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-xl flex items-center gap-3 text-rose-400 text-xs sm:text-sm">
+          <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-xl flex items-center gap-3 text-rose-400 text-xs sm:text-sm print:hidden">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <div>
               <p className="font-bold">Error Database:</p>
@@ -237,107 +237,114 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* Metrics Card */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 shadow-lg">
-            <div className="flex justify-between items-center text-slate-400 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider">
-                Omzet Penjualan ({timeRange === 'today' ? 'Hari Ini' : timeRange === 'month' ? 'Bulan Ini' : timeRange === 'year' ? 'Tahun Ini' : 'Keseluruhan'})
+        {/* ========================================================= */}
+        {/* AREA YANG AKAN DICETAK (DIBERI ID: printable-report) */}
+        {/* ========================================================= */}
+        <div id="printable-report" className="space-y-6">
+          
+          {/* Metrics Card */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 shadow-lg print:border-black print:bg-slate-100">
+              <div className="flex justify-between items-center text-slate-400 print:text-slate-700 mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider">
+                  Omzet Penjualan ({timeRange === 'today' ? 'Hari Ini' : timeRange === 'month' ? 'Bulan Ini' : timeRange === 'year' ? 'Tahun Ini' : 'Keseluruhan'})
+                </span>
+                <TrendingUp className="w-5 h-5 text-emerald-400 print:hidden" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-emerald-400 print:text-black">
+                Rp {totalOmzet.toLocaleString('id-ID')}
+              </div>
+            </div>
+
+            <div className="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 shadow-lg print:border-black print:bg-slate-100">
+              <div className="flex justify-between items-center text-slate-400 print:text-slate-700 mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider">Total Transaksi Selesai</span>
+                <ShoppingBag className="w-5 h-5 text-indigo-400 print:hidden" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-indigo-400 print:text-black">
+                {totalTransaksi} <span className="text-sm font-normal text-slate-400 print:text-slate-700">Transaksi</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabel Data Transaksi */}
+          <div className="bg-slate-900/80 rounded-2xl border border-slate-800 overflow-hidden shadow-lg print:border-black print:bg-white">
+            <div className="p-4 border-b border-slate-800 print:border-black font-bold text-white print:text-black text-sm flex justify-between items-center">
+              <span>📄 Riwayat Transaksi</span>
+              <span className="text-xs font-normal text-slate-400 print:text-slate-700">
+                Menampilkan {filteredSales.length} data
               </span>
-              <TrendingUp className="w-5 h-5 text-emerald-400" />
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-400">
-              Rp {totalOmzet.toLocaleString('id-ID')}
-            </div>
-          </div>
 
-          <div className="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 shadow-lg">
-            <div className="flex justify-between items-center text-slate-400 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider">Total Transaksi Selesai</span>
-              <ShoppingBag className="w-5 h-5 text-indigo-400" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-indigo-400">
-              {totalTransaksi} <span className="text-sm font-normal text-slate-400">Transaksi</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabel Data Transaksi */}
-        <div className="bg-slate-900/80 rounded-2xl border border-slate-800 overflow-hidden shadow-lg">
-          <div className="p-4 border-b border-slate-800 font-bold text-white text-sm flex justify-between items-center">
-            <span>📄 Riwayat Transaksi</span>
-            <span className="text-xs font-normal text-slate-400">
-              Menampilkan {filteredSales.length} data
-            </span>
-          </div>
-
-          {loading ? (
-            <div className="p-12 text-center text-slate-400 text-xs sm:text-sm font-semibold animate-pulse">
-              Memuat data laporan penjualan...
-            </div>
-          ) : filteredSales.length === 0 ? (
-            <div className="p-12 text-center text-slate-500 text-xs sm:text-sm">
-              Tidak ada transaksi ditemukan pada periode/filter ini.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-950/60 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-800">
-                    <th className="p-4">Waktu</th>
-                    <th className="p-4">Detail Items</th>
-                    <th className="p-4">Metode Bayar</th>
-                    <th className="p-4 text-right">Total Transaksi</th>
-                    <th className="p-4 text-center print:hidden">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60 text-xs sm:text-sm">
-                  {filteredSales.map(sale => (
-                    <tr key={sale.id} className="hover:bg-slate-800/40 transition">
-                      <td className="p-4 text-xs font-medium text-slate-400 whitespace-nowrap">
-                        {new Date(sale.created_at).toLocaleString('id-ID', {
-                          dateStyle: 'medium',
-                          timeStyle: 'short'
-                        })}
-                      </td>
-                      <td className="p-4">
-                        <div className="space-y-1">
-                          {sale.sale_items?.map(item => (
-                            <div key={item.id} className="text-xs text-slate-300">
-                              • <span className="font-semibold text-white">{item.products?.name || 'Produk'}</span> x{item.quantity} {item.product_units?.unit_name || ''} (@Rp {(item.price_per_unit || 0).toLocaleString('id-ID')})
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${
-                          sale.payment_method?.toLowerCase() === 'kasbon' 
-                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
-                            : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                        }`}>
-                          {sale.payment_method || 'CASH'}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right font-extrabold text-white whitespace-nowrap">
-                        Rp {(sale.total_amount || 0).toLocaleString('id-ID')}
-                      </td>
-                      <td className="p-4 text-center print:hidden">
-                        <button
-                          onClick={() => handleDeleteSale(sale.id)}
-                          disabled={deletingId === sale.id}
-                          title="Hapus Transaksi"
-                          className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition disabled:opacity-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
+            {loading ? (
+              <div className="p-12 text-center text-slate-400 text-xs sm:text-sm font-semibold animate-pulse print:hidden">
+                Memuat data laporan penjualan...
+              </div>
+            ) : filteredSales.length === 0 ? (
+              <div className="p-12 text-center text-slate-500 text-xs sm:text-sm print:text-black">
+                Tidak ada transaksi ditemukan pada periode/filter ini.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-950/60 print:bg-slate-200 text-[11px] text-slate-400 print:text-black uppercase tracking-wider border-b border-slate-800 print:border-black">
+                      <th className="p-4">Waktu</th>
+                      <th className="p-4">Detail Items</th>
+                      <th className="p-4">Metode Bayar</th>
+                      <th className="p-4 text-right">Total Transaksi</th>
+                      <th className="p-4 text-center print:hidden">Aksi</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 print:divide-slate-300 text-xs sm:text-sm">
+                    {filteredSales.map(sale => (
+                      <tr key={sale.id} className="hover:bg-slate-800/40 transition">
+                        <td className="p-4 text-xs font-medium text-slate-400 print:text-black whitespace-nowrap">
+                          {new Date(sale.created_at).toLocaleString('id-ID', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short'
+                          })}
+                        </td>
+                        <td className="p-4">
+                          <div className="space-y-1">
+                            {sale.sale_items?.map(item => (
+                              <div key={item.id} className="text-xs text-slate-300 print:text-black">
+                                • <span className="font-semibold text-white print:text-black">{item.products?.name || 'Produk'}</span> x{item.quantity} {item.product_units?.unit_name || ''} (@Rp {(item.price_per_unit || 0).toLocaleString('id-ID')})
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border print:border-black print:text-black ${
+                            sale.payment_method?.toLowerCase() === 'kasbon' 
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
+                              : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                          }`}>
+                            {sale.payment_method || 'CASH'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right font-extrabold text-white print:text-black whitespace-nowrap">
+                          Rp {(sale.total_amount || 0).toLocaleString('id-ID')}
+                        </td>
+                        <td className="p-4 text-center print:hidden">
+                          <button
+                            onClick={() => handleDeleteSale(sale.id)}
+                            disabled={deletingId === sale.id}
+                            title="Hapus Transaksi"
+                            className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition disabled:opacity-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
+
       </div>
     </div>
   )

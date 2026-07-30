@@ -20,7 +20,7 @@ import {
 
 export default function LandingPage() {
   // Ganti nomor WA kamu di sini (Gunakan format 62...)
-  const whatsappNumber = '6281234567890' 
+  const whatsappNumber = '6283827740499' 
   const waMessage = encodeURIComponent('Halo Admin, saya tertarik untuk coba Demo Aplikasi Kasir & Stok Grosir. Bisa minta info selengkapnya?')
   const waLink = `https://wa.me/${whatsappNumber}?text=${waMessage}`
 

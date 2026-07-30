@@ -24,27 +24,51 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ==========================================
+   ATURAN CETAK (PRINT) STRUK & LAPORAN
+   ========================================== */
 @media print {
-  /* Sembunyikan semua elemen aplikasi kasir saat print */
+  /* 1. Sembunyikan seluruh elemen halaman dulu */
   body * {
     visibility: hidden;
   }
-  
-  /* Hanya tampilkan elemen area cetak struk */
-  .receipt-print-area, .receipt-print-area * {
+
+  /* 2. TENTUKAN AREA CETAK STRUK KASIR (58mm) */
+  .receipt-print-area, 
+  .receipt-print-area * {
     visibility: visible;
+    color: #000000 !important;
+    background: #ffffff !important;
   }
 
-  /* Atur posisi struk ke pojok kiri atas kertas */
   .receipt-print-area {
     position: absolute;
     left: 0;
     top: 0;
-    width: 58mm; /* Sesuaikan 58mm atau 80mm sesuai kertas printer thermal */
+    width: 58mm; /* Sesuaikan dengan printer thermal */
     margin: 0;
     padding: 4px;
   }
 
+  /* 3. TENTUKAN AREA CETAK LAPORAN (Ukuran Kertas Kertas Biasa / PDF) */
+  #printable-report, 
+  #printable-report * {
+    visibility: visible;
+    color: #000000 !important; /* Paksa teks jadi HITAM */
+    background: #ffffff !important; /* Paksa background jadi PUTIH */
+  }
+
+  #printable-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 16px;
+  }
+
+  /* 4. Reset Margin Kertas Printer */
   @page {
     size: auto;
     margin: 0mm;
