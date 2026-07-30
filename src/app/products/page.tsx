@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabaseClient'
 import { Product } from '@/types/pos'
 import { Html5QrcodeScanner } from 'html5-qrcode'
@@ -14,7 +14,9 @@ import {
   Loader2, 
   Sparkles,
   Layers,
-  CheckCircle2
+  Edit2,
+  PlusCircle,
+  MinusCircle
 } from 'lucide-react'
 
 interface UnitInput {
@@ -30,6 +32,11 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+
+  // State untuk Quick Adjust Stock Modal
+  const [stockModalProd, setStockModalProd] = useState<Product | null>(null)
+  const [adjustAmount, setAdjustAmount] = useState<number>(0)
+  const [adjustType, setAdjustType] = useState<'add' | 'reduce'>('add')
 
   // State untuk Camera Scanner Modal
   const [isScannerOpen, setIsScannerOpen] = useState(false)
@@ -53,17 +60,15 @@ export default function ProductsPage() {
     let scanner: Html5QrcodeScanner | null = null;
 
     if (isScannerOpen) {
-      // Delay mikro agar elemen DOM #reader siap
       setTimeout(() => {
         scanner = new Html5QrcodeScanner(
           "reader",
           { fps: 10, qrbox: { width: 250, height: 150 } },
-          /* verbose= */ false
+          false
         );
 
         scanner.render(
           (decodedText) => {
-            // Suara Beep/Ting-tung saat scan berhasil
             try {
               const audio = new Audio('/sounds/beep.mp3');
               audio.play();
@@ -75,9 +80,7 @@ export default function ProductsPage() {
             setIsScannerOpen(false);
             if (scanner) scanner.clear();
           },
-          (errorMessage) => {
-            // Mengabaikan error scan biasa saat kamera belum nge-fit
-          }
+          (errorMessage) => {}
         );
       }, 300);
     }
@@ -170,6 +173,48 @@ export default function ProductsPage() {
     }
   }
 
+  // Update/Penyesuaian Stok Cepat
+  const handleUpdateStock = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!stockModalProd || adjustAmount <= 0) return
+
+    setSubmitting(true)
+    const currentStock = stockModalProd.stock_in_base_unit
+    const newStock = adjustType === 'add' 
+      ? currentStock + adjustAmount 
+      : Math.max(0, currentStock - adjustAmount)
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ stock_in_base_unit: newStock })
+        .eq('id', stockModalProd.id)
+
+      if (error) throw error
+
+      setStockModalProd(null)
+      setAdjustAmount(0)
+      fetchProducts()
+    } catch (err: any) {
+      alert('Gagal memperbarui stok: ' + err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // Hapus Produk
+  const handleDeleteProduct = async (id: string, name: string) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus produk "${name}"?`)) return
+
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', id)
+      if (error) throw error
+      fetchProducts()
+    } catch (err: any) {
+      alert('Gagal menghapus produk: ' + err.message)
+    }
+  }
+
   const inputStyle = "w-full border border-slate-200 bg-slate-50/50 p-2.5 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm placeholder:text-slate-400"
 
   return (
@@ -185,7 +230,7 @@ export default function ProductsPage() {
               </span>
               <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Katalog Produk Grosir</h1>
             </div>
-            <p className="text-xs md:text-sm text-slate-500 mt-1 pl-10">Kelola master data barang, barcode, dan konversi multi-unit secara terpusat</p>
+            <p className="text-xs md:text-sm text-slate-500 mt-1 pl-10">Kelola master data barang, barcode, stok, dan konversi multi-unit secara terpusat</p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -215,50 +260,98 @@ export default function ProductsPage() {
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                     <th className="p-4 pl-6">Nama Produk / Barcode</th>
-                    <th className="p-4">Stok Utama (Base)</th>
-                    <th className="p-4 pr-6">Pengaturan Satuan & Harga</th>
+                    <th className="p-4">Status & Jumlah Stok</th>
+                    <th className="p-4">Pengaturan Satuan & Harga</th>
+                    <th className="p-4 pr-6 text-center">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">
-                  {products.map(p => (
-                    <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="p-4 pl-6">
-                        <div className="font-bold text-slate-800">{p.name}</div>
-                        <div className="inline-flex items-center gap-1 text-xs text-slate-400 font-mono mt-0.5">
-                          <Barcode className="w-3.5 h-3.5" />
-                          <span>{p.barcode || 'Tanpa Barcode'}</span>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="inline-flex items-baseline gap-1 bg-slate-100/80 px-3 py-1 rounded-lg">
-                          <span className="font-bold text-slate-800 text-base">{p.stock_in_base_unit}</span>
-                          <span className="text-xs font-medium text-slate-500">
-                            {p.product_units?.find(u => u.is_base_unit)?.unit_name || 'Unit'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4 pr-6">
-                        <div className="flex flex-wrap gap-2">
-                          {p.product_units?.map(u => (
-                            <div 
-                              key={u.id} 
-                              className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
-                                u.is_base_unit 
-                                  ? 'bg-indigo-50/60 border-indigo-200/80 text-indigo-900' 
-                                  : 'bg-emerald-50/60 border-emerald-200/80 text-emerald-900'
-                              }`}
-                            >
-                              <span className="font-semibold">{u.unit_name}</span>
-                              <span className="text-slate-400 mx-1.5">|</span>
-                              <span className="text-slate-500">Isi {u.conversion_factor}</span>
-                              <span className="text-slate-400 mx-1.5">|</span>
-                              <strong className="font-bold">Rp {u.price.toLocaleString('id-ID')}</strong>
+                  {products.map(p => {
+                    const baseUnitName = p.product_units?.find(u => u.is_base_unit)?.unit_name || 'Unit'
+                    const stock = p.stock_in_base_unit
+
+                    return (
+                      <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="p-4 pl-6">
+                          <div className="font-bold text-slate-800">{p.name}</div>
+                          <div className="inline-flex items-center gap-1 text-xs text-slate-400 font-mono mt-0.5">
+                            <Barcode className="w-3.5 h-3.5" />
+                            <span>{p.barcode || 'Tanpa Barcode'}</span>
+                          </div>
+                        </td>
+
+                        {/* Stok + Status Badge */}
+                        <td className="p-4">
+                          <div className="flex flex-col gap-1.5 items-start">
+                            {stock <= 0 ? (
+                              <span className="text-[10px] font-extrabold bg-rose-100 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full">
+                                HABIS
+                              </span>
+                            ) : stock <= 10 ? (
+                              <span className="text-[10px] font-extrabold bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                                SEDIKIT
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                ADA
+                              </span>
+                            )}
+
+                            <div className="inline-flex items-baseline gap-1 bg-slate-100/80 px-2.5 py-1 rounded-lg">
+                              <span className="font-bold text-slate-800 text-base">{stock}</span>
+                              <span className="text-xs font-medium text-slate-500">{baseUnitName}</span>
                             </div>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                          </div>
+                        </td>
+
+                        <td className="p-4">
+                          <div className="flex flex-wrap gap-2">
+                            {p.product_units?.map(u => (
+                              <div 
+                                key={u.id} 
+                                className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                                  u.is_base_unit 
+                                    ? 'bg-indigo-50/60 border-indigo-200/80 text-indigo-900' 
+                                    : 'bg-emerald-50/60 border-emerald-200/80 text-emerald-900'
+                                }`}
+                              >
+                                <span className="font-semibold">{u.unit_name}</span>
+                                <span className="text-slate-400 mx-1.5">|</span>
+                                <span className="text-slate-500">Isi {u.conversion_factor}</span>
+                                <span className="text-slate-400 mx-1.5">|</span>
+                                <strong className="font-bold">Rp {u.price.toLocaleString('id-ID')}</strong>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+
+                        {/* Tombol Aksi (Kelola Stok & Hapus) */}
+                        <td className="p-4 pr-6">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                setStockModalProd(p)
+                                setAdjustType('add')
+                                setAdjustAmount(0)
+                              }}
+                              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition"
+                              title="Tambah/Kurang Stok"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteProduct(p.id, p.name)}
+                              className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition"
+                              title="Hapus Produk"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -427,6 +520,77 @@ export default function ProductsPage() {
         </div>
       )}
 
+      {/* Modal Quick Adjust Stock (Penyesuaian Stok Cepat) */}
+      {stockModalProd && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+              <h3 className="font-bold text-slate-800 text-base">Penyesuaian Stok</h3>
+              <button 
+                onClick={() => setStockModalProd(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 mb-1">Produk: <strong className="text-slate-800">{stockModalProd.name}</strong></p>
+            <p className="text-xs text-slate-500 mb-4">Stok Saat Ini: <span className="font-bold text-indigo-600">{stockModalProd.stock_in_base_unit}</span></p>
+
+            <form onSubmit={handleUpdateStock} className="space-y-4">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAdjustType('add')}
+                  className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold border transition ${
+                    adjustType === 'add' 
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-700' 
+                      : 'bg-slate-50 border-slate-200 text-slate-600'
+                  }`}
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>Stok Masuk</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAdjustType('reduce')}
+                  className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold border transition ${
+                    adjustType === 'reduce' 
+                      ? 'bg-rose-50 border-rose-500 text-rose-700' 
+                      : 'bg-slate-50 border-slate-200 text-slate-600'
+                  }`}
+                >
+                  <MinusCircle className="w-4 h-4" />
+                  <span>Stok Keluar / Rusak</span>
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Jumlah (Satuan Dasar)</label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={adjustAmount || ''}
+                  onChange={e => setAdjustAmount(Number(e.target.value))}
+                  placeholder="Masukkan Qty..."
+                  className={inputStyle}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting || adjustAmount <= 0}
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition disabled:opacity-50"
+              >
+                {submitting ? 'Memproses...' : 'Simpan Penyesuaian'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Modal Kamera Barcode Scanner */}
       {isScannerOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
@@ -441,7 +605,6 @@ export default function ProductsPage() {
             <h3 className="font-bold text-slate-800 text-lg mb-1">Arahkan ke Barcode</h3>
             <p className="text-xs text-slate-500 mb-4">Posisikan kode batang di tengah kotak kamera</p>
             
-            {/* Element Tempat Kamera HTML5-QRCode Render */}
             <div id="reader" className="overflow-hidden rounded-2xl border-2 border-indigo-500"></div>
 
             <p className="text-[11px] text-slate-400 mt-4">Pindaian akan memicu bunyi bip dan otomatis mengisi kolom barcode.</p>
