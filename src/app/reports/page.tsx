@@ -51,7 +51,7 @@ export default function ReportsPage() {
             id,
             quantity,
             price_per_unit,
-            product_units ( unit_name ),
+            product_units!product_unit_id ( unit_name ),
             products ( name )
           )
         `)
