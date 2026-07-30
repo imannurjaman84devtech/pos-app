@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabaseClient'
 import { 
   ShoppingCart, 
   Package, 
@@ -10,20 +11,32 @@ import {
   Users, 
   Settings, 
   Store,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react'
 
 const menuItems = [
   { name: 'POS Kasir', href: '/pos', icon: ShoppingCart },
   { name: 'Katalog Produk', href: '/products', icon: Package },
   { name: 'Stok / Inventory', href: '/inventory', icon: Warehouse },
-  { name: 'Laporan Transaksi', href: '/reports', icon: Receipt }, // Fixed: Sesuaikan ke folder /reports
+  { name: 'Laporan Transaksi', href: '/reports', icon: Receipt },
   { name: 'Pelanggan & Hutang', href: '/customers', icon: Users },
   { name: 'Pengaturan', href: '/settings', icon: Settings },
 ]
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const supabase = createClient()
+
+  const handleLogout = async () => {
+    const confirmLogout = window.confirm('Apakah Anda yakin ingin keluar dari aplikasi?')
+    if (confirmLogout) {
+      await supabase.auth.signOut()
+      router.push('/login')
+      router.refresh()
+    }
+  }
 
   return (
     <aside className="w-64 bg-slate-900 text-slate-300 min-h-screen flex flex-col justify-between border-r border-slate-800 shrink-0 hidden md:flex">
@@ -56,7 +69,6 @@ export default function Sidebar() {
         <nav className="px-3 space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon
-            // Pintar: Tetap aktif (highlight) kalau user ada di sub-route (contoh: /inventory/restock)
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
 
             return (
@@ -80,17 +92,25 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      {/* Footer Profile / User */}
-      <div className="p-4 border-t border-slate-800/80">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-white font-bold text-sm">
+      {/* Footer Profile & Logout */}
+      <div className="p-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="w-9 h-9 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
             K
           </div>
           <div className="overflow-hidden">
             <p className="text-xs font-bold text-white truncate">Kasir Utama</p>
-            <p className="text-[10px] text-slate-400">Shift Pagi</p>
+            <p className="text-[10px] text-slate-400 truncate">Shift Pagi</p>
           </div>
         </div>
+
+        <button
+          onClick={handleLogout}
+          title="Keluar dari Aplikasi"
+          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all shrink-0"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       </div>
     </aside>
   )
