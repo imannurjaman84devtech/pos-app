@@ -15,7 +15,9 @@ import {
   Wallet, 
   Clock, 
   X,
-  Trash2
+  Trash2,
+  Building2,
+  FileText
 } from 'lucide-react'
 
 interface CartItem {
@@ -41,6 +43,8 @@ interface CompletedSale {
   items: CartItem[]
   date: string
   paymentMethod: string
+  selectedBank?: string
+  transferRef?: string
   customerName?: string
   dueDate?: string
 }
@@ -63,6 +67,11 @@ export default function POSPage() {
   // State Pembayaran
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer' | 'kasbon'>('cash')
   const [paymentAmount, setPaymentAmount] = useState<number>(0)
+  
+  // State Tambahan Khusus Transfer
+  const [selectedBank, setSelectedBank] = useState<string>('BCA')
+  const [transferRef, setTransferRef] = useState<string>('')
+
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('')
   const [dueDate, setDueDate] = useState<string>('')
   const [notes, setNotes] = useState<string>('')
@@ -239,6 +248,11 @@ export default function POSPage() {
       const transactionDate = new Date().toLocaleString('id-ID')
       const activeCustomer = customers.find(c => c.id === selectedCustomerId)
 
+      // Gabungkan catatan jika transfer
+      const finalNotes = paymentMethod === 'transfer' 
+        ? `[Transfer ${selectedBank}${transferRef ? ` - Ref: ${transferRef}` : ''}] ${notes}`.trim()
+        : notes || null
+
       // 1. Simpan ke Tabel Sales
       const { data: sale, error: saleErr } = await supabase
         .from('sales')
@@ -252,7 +266,7 @@ export default function POSPage() {
             payment_status: paymentMethod === 'kasbon' ? 'unpaid' : 'paid',
             customer_id: selectedCustomerId || null,
             due_date: paymentMethod === 'kasbon' ? dueDate : null,
-            notes: notes || null
+            notes: finalNotes
           }
         ])
         .select()
@@ -292,12 +306,15 @@ export default function POSPage() {
         items: [...cart],
         date: transactionDate,
         paymentMethod,
+        selectedBank: paymentMethod === 'transfer' ? selectedBank : undefined,
+        transferRef: paymentMethod === 'transfer' ? transferRef : undefined,
         customerName: activeCustomer?.name,
         dueDate
       })
 
       setCart([])
       setPaymentAmount(0)
+      setTransferRef('')
       setSelectedCustomerId('')
       setDueDate('')
       setNotes('')
@@ -574,32 +591,76 @@ export default function POSPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-bold text-slate-300">
-                    {paymentMethod === 'cash' ? 'Uang Dibayar (Tunai)' : 'Nominal Transfer'}
-                  </label>
-                  <button 
-                    onClick={handlePayExact}
-                    className="text-[10px] text-indigo-400 hover:underline font-bold"
-                  >
-                    [Uang Pas]
-                  </button>
+              <div className="space-y-2.5">
+                
+                {/* TAMBAHAN FORM VALIDASI UNTUK METODE TRANSFER */}
+                {paymentMethod === 'transfer' && (
+                  <div className="bg-indigo-500/10 border border-indigo-500/30 p-3 rounded-xl space-y-2 text-xs">
+                    <div>
+                      <label className="text-[11px] font-bold text-indigo-300 mb-1 flex items-center gap-1">
+                        <Building2 className="w-3 h-3" /> Rekening / QRIS Tujuan
+                      </label>
+                      <select
+                        value={selectedBank}
+                        onChange={e => setSelectedBank(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 font-semibold text-white focus:outline-none focus:border-indigo-500"
+                      >
+                        <option value="BCA">BCA - 1234567890 (a.n Toko)</option>
+                        <option value="Mandiri">Mandiri - 0987654321 (a.n Toko)</option>
+                        <option value="BRI">BRI - 5678901234 (a.n Toko)</option>
+                        <option value="QRIS">QRIS Statis Toko</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-indigo-300 mb-1 flex items-center gap-1">
+                        <FileText className="w-3 h-3" /> No. Ref / Pengirim <span className="text-slate-500 font-normal">(Opsional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Contoh: Ref#8812 / a.n Budi"
+                        value={transferRef}
+                        onChange={e => setTransferRef(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Input Nominal Pembayaran */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-slate-300">
+                      {paymentMethod === 'cash' ? 'Uang Dibayar (Tunai)' : 'Nominal Transfer'}
+                    </label>
+                    <button 
+                      type="button"
+                      onClick={handlePayExact}
+                      className="text-[10px] text-indigo-400 hover:underline font-bold"
+                    >
+                      [Uang Pas]
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={paymentAmount || ''}
+                    onChange={e => setPaymentAmount(Number(e.target.value))}
+                    disabled={cart.length === 0}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-sm font-extrabold text-white focus:outline-none focus:border-indigo-500"
+                  />
                 </div>
-                <input
-                  type="number"
-                  placeholder="0"
-                  value={paymentAmount || ''}
-                  onChange={e => setPaymentAmount(Number(e.target.value))}
-                  disabled={cart.length === 0}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-sm font-extrabold text-white focus:outline-none focus:border-indigo-500"
-                />
 
                 {paymentAmount > 0 && (
-                  <div className="flex justify-between items-center text-xs font-bold pt-1">
-                    <span className="text-slate-400">Kembalian:</span>
+                  <div className="flex justify-between items-center text-xs font-bold pt-0.5">
+                    <span className="text-slate-400">
+                      {paymentMethod === 'cash' ? 'Kembalian:' : 'Status Validasi:'}
+                    </span>
                     <span className={changeAmount >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                      Rp {changeAmount.toLocaleString('id-ID')}
+                      {paymentMethod === 'cash' 
+                        ? `Rp ${changeAmount.toLocaleString('id-ID')}`
+                        : changeAmount >= 0 ? '✓ Nominal Pas / Sesuai' : '✕ Nominal Kurang'
+                      }
                     </span>
                   </div>
                 )}
@@ -694,18 +755,35 @@ export default function POSPage() {
                   <span>Metode Bayar</span>
                   <span className="font-bold text-white uppercase">{completedSale.paymentMethod}</span>
                 </div>
+
+                {completedSale.selectedBank && (
+                  <div className="flex justify-between text-slate-400">
+                    <span>Bank Tujuan</span>
+                    <span className="font-bold text-indigo-400">{completedSale.selectedBank}</span>
+                  </div>
+                )}
+
+                {completedSale.transferRef && (
+                  <div className="flex justify-between text-slate-400">
+                    <span>No. Ref / Pengirim</span>
+                    <span className="font-bold text-slate-200">{completedSale.transferRef}</span>
+                  </div>
+                )}
+
                 {completedSale.customerName && (
                   <div className="flex justify-between text-slate-400">
                     <span>Pelanggan</span>
                     <span className="font-bold text-amber-400">{completedSale.customerName}</span>
                   </div>
                 )}
+
                 {completedSale.dueDate && (
                   <div className="flex justify-between text-slate-400">
                     <span>Jatuh Tempo</span>
                     <span className="font-bold text-rose-400">{completedSale.dueDate}</span>
                   </div>
                 )}
+
                 <div className="border-t border-slate-700/80 pt-2 flex justify-between items-center">
                   <span className="font-bold text-slate-300">Total Belanja</span>
                   <span className="text-base font-black text-indigo-400">
@@ -746,6 +824,8 @@ export default function POSPage() {
             <div>No: {completedSale.invoiceNumber}</div>
             <div>Tgl: {completedSale.date}</div>
             <div>Metode: {completedSale.paymentMethod.toUpperCase()}</div>
+            {completedSale.selectedBank && <div>Bank: {completedSale.selectedBank}</div>}
+            {completedSale.transferRef && <div>Ref: {completedSale.transferRef}</div>}
             {completedSale.customerName && <div>Pelanggan: {completedSale.customerName}</div>}
             {completedSale.dueDate && <div>Jatuh Tempo: {completedSale.dueDate}</div>}
           </div>
@@ -762,28 +842,24 @@ export default function POSPage() {
             ))}
           </div>
 
-          <div className="border-b border-dashed border-black pb-2 mb-2 space-y-0.5">
+          <div className="space-y-0.5 border-b border-dashed border-black pb-2 mb-2">
             <div className="flex justify-between font-bold">
-              <span>Total:</span>
+              <span>TOTAL:</span>
               <span>Rp {completedSale.total.toLocaleString('id-ID')}</span>
             </div>
-            {completedSale.paymentMethod !== 'kasbon' && (
-              <>
-                <div className="flex justify-between">
-                  <span>Bayar:</span>
-                  <span>Rp {completedSale.paid.toLocaleString('id-ID')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Kembali:</span>
-                  <span>Rp {completedSale.change.toLocaleString('id-ID')}</span>
-                </div>
-              </>
-            )}
+            <div className="flex justify-between">
+              <span>BAYAR:</span>
+              <span>Rp {completedSale.paid.toLocaleString('id-ID')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>KEMBALI:</span>
+              <span>Rp {completedSale.change.toLocaleString('id-ID')}</span>
+            </div>
           </div>
 
-          <div className="text-center text-[9px] mt-3">
-            <p>Terima Kasih Telah Berbelanja!</p>
-            <p>Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.</p>
+          <div className="text-center pt-1 text-[9px]">
+            <p>*** Terima Kasih ***</p>
+            <p>Barang yang sudah dibeli tidak dapat ditukar/dikembalikan</p>
           </div>
         </div>
       )}
