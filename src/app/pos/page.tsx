@@ -35,7 +35,6 @@ interface Customer {
   total_debt?: number
 }
 
-// Interface untuk Tabel Baru store_accounts
 interface StoreAccount {
   id: string
   account_name: string
@@ -146,7 +145,7 @@ export default function POSPage() {
     
     if (data && data.length > 0) {
       setStoreAccounts(data)
-      setSelectedAccountId(data[0].id) // Default pilih opsi pertama
+      setSelectedAccountId(data[0].id)
     }
   }
 
@@ -253,7 +252,6 @@ export default function POSPage() {
     setPaymentAmount(grandTotal)
   }
 
-  // Cari objek rekening yang sedang dipilih kasir
   const currentSelectedAccount = storeAccounts.find(a => a.id === selectedAccountId)
 
   // Process Checkout
@@ -280,7 +278,6 @@ export default function POSPage() {
         ? `${currentSelectedAccount.account_name} (${currentSelectedAccount.account_number})`
         : '-'
 
-      // Gabungkan catatan jika transfer
       const finalNotes = paymentMethod === 'transfer' 
         ? `[Payment via ${bankLabel}${transferRef ? ` - Ref/Pengirim: ${transferRef}` : ''}] ${notes}`.trim()
         : notes || null
@@ -378,61 +375,62 @@ export default function POSPage() {
         }
       `}</style>
 
-      <div className="flex h-screen bg-slate-950 font-sans text-slate-100 overflow-hidden print:hidden">
+      {/* CONTAINER UTAMA RESPONSUIF: flex-col di Mobile, lg:flex-row di Desktop */}
+      <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen bg-slate-950 font-sans text-slate-100 overflow-y-auto lg:overflow-hidden print:hidden">
         
         {/* ================= SEKSI KIRI: KATALOG PRODUK ================= */}
-        <div className="w-7/12 p-6 flex flex-col h-full border-r border-slate-800/80 bg-slate-900/50">
-          <div className="flex justify-between items-center mb-5">
+        <div className="w-full lg:w-7/12 p-4 sm:p-6 flex flex-col h-auto lg:h-full border-b lg:border-b-0 lg:border-r border-slate-800/80 bg-slate-900/50">
+          <div className="flex flex-wrap justify-between items-center gap-2 mb-4 sm:mb-5">
             <div>
-              <h1 className="text-xl font-extrabold text-white tracking-wide flex items-center gap-2">
-                <ShoppingCart className="w-6 h-6 text-indigo-500" /> POS Kasir Grosir
+              <h1 className="text-lg sm:text-xl font-extrabold text-white tracking-wide flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500" /> POS Kasir Grosir
               </h1>
-              <p className="text-xs text-slate-400">Tekan ESC kapan saja untuk fokus pencarian</p>
+              <p className="text-[11px] sm:text-xs text-slate-400">Tekan ESC kapan saja untuk fokus pencarian</p>
             </div>
-            <span className="text-xs bg-indigo-500/10 text-indigo-400 font-semibold px-3 py-1 rounded-full border border-indigo-500/20">
-              {filteredProducts.length} Produk Tersedia
+            <span className="text-[11px] sm:text-xs bg-indigo-500/10 text-indigo-400 font-semibold px-2.5 py-1 rounded-full border border-indigo-500/20">
+              {filteredProducts.length} Produk
             </span>
           </div>
 
           {/* Barcode Search Bar */}
-          <div className="relative mb-5">
-            <Search className="w-5 h-5 absolute left-3.5 top-3 text-slate-400" />
+          <div className="relative mb-4 sm:mb-5">
+            <Search className="w-4 h-4 sm:w-5 sm:h-5 absolute left-3.5 top-3 text-slate-400" />
             <input
               id="barcode-input"
               type="text"
-              placeholder="Cari Produk atau Scan Barcode... [ESC]"
+              placeholder="Cari Produk / Scan Barcode..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               onKeyDown={handleSearchKeyDown}
-              className="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl pl-11 pr-4 py-2.5 text-sm font-medium text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition shadow-inner"
+              className="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl pl-10 sm:pl-11 pr-4 py-2.5 text-xs sm:text-sm font-medium text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition shadow-inner"
               autoFocus
             />
           </div>
 
-          {/* Grid Katalog Produk */}
-          <div className="flex-1 overflow-y-auto grid grid-cols-3 gap-3.5 pr-1">
+          {/* Grid Katalog Produk: 2 Kolom di HP, 3 di Tablet/Desktop */}
+          <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3.5 pr-1 max-h-[50vh] lg:max-h-none">
             {filteredProducts.map(p => (
               <div
                 key={p.id}
                 onClick={() => addToCart(p)}
-                className="bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-indigo-500/50 rounded-xl p-3.5 transition cursor-pointer flex flex-col justify-between group shadow-sm hover:shadow-indigo-500/10"
+                className="bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-indigo-500/50 rounded-xl p-3 transition cursor-pointer flex flex-col justify-between group shadow-sm hover:shadow-indigo-500/10 active:scale-95"
               >
                 <div>
-                  <h3 className="font-bold text-white text-sm line-clamp-2 leading-tight group-hover:text-indigo-400 transition mb-1">
+                  <h3 className="font-bold text-white text-xs sm:text-sm line-clamp-2 leading-tight group-hover:text-indigo-400 transition mb-1">
                     {p.name}
                   </h3>
-                  <p className="text-[10px] text-slate-400 font-mono">BC: {p.barcode || '-'}</p>
+                  <p className="text-[10px] text-slate-400 font-mono truncate">BC: {p.barcode || '-'}</p>
                 </div>
 
-                <div className="mt-3 pt-2 border-t border-slate-700/50 flex justify-between items-end">
-                  <span className="text-[10px] font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-700">
+                <div className="mt-2.5 pt-2 border-t border-slate-700/50 flex justify-between items-end">
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700">
                     Stok: {p.stock_in_base_unit}
                   </span>
                   <div className="text-right">
-                    <span className="text-xs font-extrabold text-indigo-400">
+                    <span className="text-xs font-extrabold text-indigo-400 block">
                       Rp {p.product_units?.[0]?.price.toLocaleString('id-ID') || 0}
                     </span>
-                    <span className="text-[10px] text-slate-400 block">/{p.product_units?.[0]?.unit_name}</span>
+                    <span className="text-[9px] sm:text-[10px] text-slate-400">/{p.product_units?.[0]?.unit_name}</span>
                   </div>
                 </div>
               </div>
@@ -441,10 +439,10 @@ export default function POSPage() {
         </div>
 
         {/* ================= SEKSI KANAN: KERANJANG & PAYMENTS ================= */}
-        <div className="w-5/12 bg-slate-900 p-5 flex flex-col justify-between h-full border-l border-slate-800">
+        <div className="w-full lg:w-5/12 bg-slate-900 p-4 sm:p-5 flex flex-col justify-between h-auto lg:h-full border-t lg:border-t-0 lg:border-l border-slate-800">
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex justify-between items-center pb-3 border-b border-slate-800 mb-3">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                 Rincian Keranjang
               </h2>
               {cart.length > 0 && (
@@ -458,22 +456,22 @@ export default function POSPage() {
             </div>
 
             {/* Item List Scrollable */}
-            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
+            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 max-h-[40vh] lg:max-h-none min-h-[120px]">
               {cart.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-slate-500">
-                  <ShoppingCart className="w-12 h-12 stroke-[1.5] mb-2 opacity-40" />
+                <div className="h-full py-8 flex flex-col items-center justify-center text-slate-500">
+                  <ShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 stroke-[1.5] mb-2 opacity-40" />
                   <p className="text-xs font-medium">Keranjang Belanja Masih Kosong</p>
                 </div>
               ) : (
                 cart.map((item, idx) => (
-                  <div key={idx} className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 flex justify-between items-center gap-3">
+                  <div key={idx} className="bg-slate-800/80 p-2.5 sm:p-3 rounded-xl border border-slate-700/60 flex justify-between items-center gap-2 sm:gap-3">
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-xs text-white truncate">{item.product.name}</h4>
-                      <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
                         <select
                           value={item.selectedUnit.id}
                           onChange={e => handleUnitChange(idx, e.target.value)}
-                          className="bg-slate-900 border border-slate-700 rounded text-[11px] font-bold text-indigo-300 px-1.5 py-0.5 focus:outline-none"
+                          className="bg-slate-900 border border-slate-700 rounded text-[10px] sm:text-[11px] font-bold text-indigo-300 px-1 py-0.5 focus:outline-none"
                         >
                           {item.product.product_units?.map(u => (
                             <option key={u.id} value={u.id}>
@@ -499,7 +497,7 @@ export default function POSPage() {
                           type="number"
                           value={item.qty}
                           onChange={e => handleQtyChange(idx, Number(e.target.value))}
-                          className="w-9 text-center text-xs font-bold text-white bg-transparent border-none focus:outline-none"
+                          className="w-8 sm:w-9 text-center text-xs font-bold text-white bg-transparent border-none focus:outline-none"
                         />
                         <button
                           onClick={() => handleQtyChange(idx, item.qty + 1)}
@@ -509,7 +507,7 @@ export default function POSPage() {
                         </button>
                       </div>
 
-                      <div className="text-right w-16">
+                      <div className="text-right min-w-[60px]">
                         <span className="text-xs font-bold text-white block">
                           Rp {item.subtotal.toLocaleString('id-ID')}
                         </span>
@@ -529,25 +527,25 @@ export default function POSPage() {
           </div>
 
           {/* ================= PANEL METODE BAYAR & FORM CHECKOUT ================= */}
-          <div className="border-t border-slate-800 pt-3.5 mt-2 space-y-3">
+          <div className="border-t border-slate-800 pt-3.5 mt-3 space-y-3">
             {/* Grand Total Bar */}
             <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 flex justify-between items-center">
               <span className="text-xs font-semibold text-slate-400">Total Transaksi</span>
               <span 
                 onClick={handlePayExact}
                 title="Klik untuk atur Uang Pas"
-                className="text-xl font-black text-indigo-400 cursor-pointer hover:underline"
+                className="text-lg sm:text-xl font-black text-indigo-400 cursor-pointer hover:underline"
               >
                 Rp {grandTotal.toLocaleString('id-ID')}
               </span>
             </div>
 
             {/* Tabs Pilihan Metode Pembayaran */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
               <button
                 type="button"
                 onClick={() => setPaymentMethod('cash')}
-                className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${
+                className={`py-2 px-2 sm:px-3 rounded-xl border text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition ${
                   paymentMethod === 'cash'
                     ? 'bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/30'
                     : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
@@ -558,18 +556,18 @@ export default function POSPage() {
               <button
                 type="button"
                 onClick={() => setPaymentMethod('transfer')}
-                className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${
+                className={`py-2 px-2 sm:px-3 rounded-xl border text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition ${
                   paymentMethod === 'transfer'
                     ? 'bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/30'
                     : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
                 }`}
               >
-                <CreditCard className="w-3.5 h-3.5" /> Transfer / QRIS
+                <CreditCard className="w-3.5 h-3.5" /> Transfer
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMethod('kasbon')}
-                className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${
+                className={`py-2 px-2 sm:px-3 rounded-xl border text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition ${
                   paymentMethod === 'kasbon'
                     ? 'bg-amber-600 border-amber-500 text-white shadow-md shadow-amber-600/30'
                     : 'bg-slate-800 border-slate-700 text-amber-400/80 hover:text-amber-400'
@@ -609,7 +607,7 @@ export default function POSPage() {
                 </select>
 
                 <div>
-                  <label className="text-[11px] font-bold text-amber-400 block mb-1 flex items-center gap-1">
+                  <label className="text-[11px] font-bold text-amber-400 mb-1 flex items-center gap-1">
                     <Calendar className="w-3 h-3" /> Tanggal Jatuh Tempo
                   </label>
                   <input
@@ -622,8 +620,6 @@ export default function POSPage() {
               </div>
             ) : (
               <div className="space-y-2.5">
-                
-                {/* FORM TRANSFER / QRIS DINAMIS DARI DATABASE */}
                 {paymentMethod === 'transfer' && (
                   <div className="bg-indigo-500/10 border border-indigo-500/30 p-3 rounded-xl space-y-2 text-xs">
                     <div>
@@ -647,7 +643,6 @@ export default function POSPage() {
                       </select>
                     </div>
 
-                    {/* Tampilkan QRIS jika tersedia di Database */}
                     {currentSelectedAccount?.qris_image_url && (
                       <div className="bg-white p-2.5 rounded-xl flex flex-col items-center justify-center my-1 text-center shadow">
                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-800 mb-1">
@@ -656,7 +651,7 @@ export default function POSPage() {
                         <img 
                           src={currentSelectedAccount.qris_image_url} 
                           alt="QRIS Toko" 
-                          className="w-32 h-32 object-contain border border-slate-200 rounded-lg"
+                          className="w-28 h-28 sm:w-32 sm:h-32 object-contain border border-slate-200 rounded-lg"
                         />
                         <span className="text-[10px] font-semibold text-slate-500 mt-1">
                           {currentSelectedAccount.holder_name}
@@ -723,7 +718,7 @@ export default function POSPage() {
             <button
               onClick={handleCheckout}
               disabled={loading || cart.length === 0}
-              className={`w-full py-3.5 rounded-xl text-sm font-bold transition shadow-lg flex items-center justify-center gap-2 ${
+              className={`w-full py-3.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-lg flex items-center justify-center gap-2 ${
                 paymentMethod === 'kasbon'
                   ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/20'
                   : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
@@ -771,13 +766,13 @@ export default function POSPage() {
                   <button
                     type="button"
                     onClick={() => setShowAddCustomerModal(false)}
-                    className="px-3 py-2 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-800"
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-bold text-slate-300 hover:bg-slate-700"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white"
+                    className="px-3 py-1.5 rounded-lg bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-500"
                   >
                     Simpan Pelanggan
                   </button>
@@ -787,134 +782,54 @@ export default function POSPage() {
           </div>
         )}
 
-        {/* ================= MODAL TRANSAKSI SUKSES ================= */}
+        {/* ================= MODAL SUKSES TRANSAKSI ================= */}
         {completedSale && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-800 text-center animate-in fade-in zoom-in duration-200">
-              <div className="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3">
-                <CheckCircle2 className="w-8 h-8" />
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl space-y-4">
+              <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-7 h-7" />
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-white">Transaksi Berhasil!</h3>
+                <p className="text-xs text-slate-400 mt-0.5">{completedSale.invoiceNumber}</p>
               </div>
 
-              <h2 className="text-xl font-bold text-white mb-0.5">
-                {completedSale.paymentMethod === 'kasbon' ? 'Kasbon Terekam!' : 'Transaksi Berhasil!'}
-              </h2>
-              <p className="text-[11px] text-slate-400 mb-4 font-mono">
-                {completedSale.invoiceNumber}
-              </p>
-
-              <div className="bg-slate-800/80 rounded-xl p-3.5 mb-5 text-left space-y-2 border border-slate-700/60 text-xs">
-                <div className="flex justify-between text-slate-400">
+              <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700 text-xs space-y-1.5 text-left">
+                <div className="flex justify-between text-slate-300">
+                  <span>Total Transaksi</span>
+                  <span className="font-bold text-white">Rp {completedSale.total.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between text-slate-300">
                   <span>Metode Bayar</span>
-                  <span className="font-bold text-white uppercase">{completedSale.paymentMethod}</span>
+                  <span className="font-bold text-indigo-400 uppercase">{completedSale.paymentMethod}</span>
                 </div>
-
-                {completedSale.selectedBank && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>Tujuan</span>
-                    <span className="font-bold text-indigo-400">{completedSale.selectedBank}</span>
+                {completedSale.paymentMethod === 'cash' && (
+                  <div className="flex justify-between text-slate-300">
+                    <span>Kembalian</span>
+                    <span className="font-bold text-emerald-400">Rp {completedSale.change.toLocaleString('id-ID')}</span>
                   </div>
                 )}
-
-                {completedSale.transferRef && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>No. Ref / Pengirim</span>
-                    <span className="font-bold text-slate-200">{completedSale.transferRef}</span>
-                  </div>
-                )}
-
-                {completedSale.customerName && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>Pelanggan</span>
-                    <span className="font-bold text-amber-400">{completedSale.customerName}</span>
-                  </div>
-                )}
-
-                {completedSale.dueDate && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>Jatuh Tempo</span>
-                    <span className="font-bold text-rose-400">{completedSale.dueDate}</span>
-                  </div>
-                )}
-
-                <div className="border-t border-slate-700/80 pt-2 flex justify-between items-center">
-                  <span className="font-bold text-slate-300">Total Belanja</span>
-                  <span className="text-base font-black text-indigo-400">
-                    Rp {completedSale.total.toLocaleString('id-ID')}
-                  </span>
-                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => window.print()}
-                  className="py-2.5 px-3 rounded-xl border border-slate-700 text-slate-300 font-bold hover:bg-slate-800 text-xs flex items-center justify-center gap-1.5"
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5"
                 >
-                  <Printer className="w-3.5 h-3.5" /> Cetak Struk
+                  <Printer className="w-4 h-4" /> Cetak Struk
                 </button>
                 <button
                   onClick={() => setCompletedSale(null)}
-                  className="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs"
+                  className="px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs"
                 >
-                  Transaksi Baru
+                  Tutup
                 </button>
               </div>
             </div>
           </div>
         )}
+
       </div>
-
-      {/* ================= STRUK THERMAL PRINT ================= */}
-      {completedSale && (
-        <div id="thermal-receipt" className="hidden print:block font-mono text-black text-[10px] leading-tight">
-          <div className="text-center mb-2 border-b border-dashed border-black pb-2">
-            <h2 className="text-xs font-bold uppercase">{storeSettings?.store_name || 'TOKO GROSIR'}</h2>
-            <p className="text-[9px]">{storeSettings?.address || 'Jl. Raya Utama No. 123'}</p>
-            <p className="text-[9px]">Telp: {storeSettings?.phone || '-'}</p>
-          </div>
-
-          <div className="mb-2 border-b border-dashed border-black pb-1">
-            <div>No: {completedSale.invoiceNumber}</div>
-            <div>Tgl: {completedSale.date}</div>
-            <div>Metode: {completedSale.paymentMethod.toUpperCase()}</div>
-            {completedSale.selectedBank && <div>Bank: {completedSale.selectedBank}</div>}
-            {completedSale.transferRef && <div>Ref: {completedSale.transferRef}</div>}
-            {completedSale.customerName && <div>Pelanggan: {completedSale.customerName}</div>}
-            {completedSale.dueDate && <div>Jatuh Tempo: {completedSale.dueDate}</div>}
-          </div>
-
-          <div className="border-b border-dashed border-black pb-2 mb-2">
-            {completedSale.items.map((item, idx) => (
-              <div key={idx} className="mb-1">
-                <div className="font-bold">{item.product.name}</div>
-                <div className="flex justify-between">
-                  <span>{item.qty} {item.selectedUnit.unit_name} x {item.selectedUnit.price.toLocaleString('id-ID')}</span>
-                  <span>Rp {item.subtotal.toLocaleString('id-ID')}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-0.5 border-b border-dashed border-black pb-2 mb-2">
-            <div className="flex justify-between font-bold">
-              <span>TOTAL:</span>
-              <span>Rp {completedSale.total.toLocaleString('id-ID')}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>BAYAR:</span>
-              <span>Rp {completedSale.paid.toLocaleString('id-ID')}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>KEMBALI:</span>
-              <span>Rp {completedSale.change.toLocaleString('id-ID')}</span>
-            </div>
-          </div>
-
-          <div className="text-center pt-1 text-[9px]">
-            <p>*** Terima Kasih ***</p>
-            <p>Barang yang sudah dibeli tidak dapat ditukar/dikembalikan</p>
-          </div>
-        </div>
-      )}
     </>
   )
 }
