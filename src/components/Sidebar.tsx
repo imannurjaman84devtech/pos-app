@@ -124,10 +124,11 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Tombol Hamburger (☰ / ✕) */}
+        {/* Tombol Hamburger (FIXED FOR TOUCH) */}
         <button
+          type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 text-slate-300 hover:text-white hover:bg-indigo-500/10 rounded-xl transition-all border border-transparent hover:border-indigo-500/20 cursor-pointer"
+          className="p-2.5 text-slate-300 hover:text-white bg-indigo-500/10 active:bg-indigo-500/20 rounded-xl transition-all border border-indigo-500/20 cursor-pointer touch-manipulation select-none active:scale-95"
           aria-label="Toggle Navigation"
         >
           {isOpen ? <X className="w-6 h-6 text-indigo-400" /> : <Menu className="w-6 h-6 text-indigo-400" />}
@@ -140,7 +141,7 @@ export default function Sidebar() {
       {isOpen && (
         <div 
           onClick={() => setIsOpen(false)} 
-          className="fixed inset-0 bg-[#050714]/80 backdrop-blur-md z-40 md:hidden transition-opacity"
+          className="fixed inset-0 bg-[#050714]/80 backdrop-blur-md z-40 md:hidden transition-opacity touch-manipulation"
         />
       )}
 
@@ -173,8 +174,9 @@ export default function Sidebar() {
 
             {/* Tombol X Tutup (Mobile Only) */}
             <button 
+              type="button"
               onClick={() => setIsOpen(false)}
-              className="md:hidden text-slate-400 hover:text-white p-1 hover:bg-indigo-500/10 rounded-lg transition"
+              className="md:hidden text-slate-400 hover:text-white p-2 hover:bg-indigo-500/10 active:bg-indigo-500/20 rounded-lg transition touch-manipulation select-none active:scale-95"
             >
               <X className="w-5 h-5" />
             </button>
@@ -207,10 +209,10 @@ export default function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 group relative overflow-hidden ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 group relative overflow-hidden touch-manipulation select-none active:scale-98 ${
                     isActive
                       ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/30 border border-indigo-400/30'
-                      : 'text-slate-400 hover:text-slate-100 hover:bg-[#111638]/50 border border-transparent'
+                      : 'text-slate-400 hover:text-slate-100 hover:bg-[#111638]/50 active:bg-[#111638] border border-transparent'
                   }`}
                 >
                   {/* Glowing Effect for Active Menu */}
@@ -254,9 +256,10 @@ export default function Sidebar() {
           </div>
 
           <button
+            type="button"
             onClick={handleLogout}
             title="Keluar dari Aplikasi"
-            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-500/30 rounded-xl transition-all shrink-0 cursor-pointer active:scale-95"
+            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 active:bg-rose-950/60 border border-transparent hover:border-rose-500/30 rounded-xl transition-all shrink-0 cursor-pointer touch-manipulation select-none active:scale-95"
           >
             <LogOut className="w-4 h-4" />
           </button>
