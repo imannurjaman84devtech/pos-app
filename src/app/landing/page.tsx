@@ -15,7 +15,10 @@ import {
   Store, 
   Sparkles,
   ShieldCheck,
-  Smartphone
+  Smartphone,
+  ChevronRight,
+  TrendingUp,
+  Boxes
 } from 'lucide-react'
 
 export default function LandingPage() {
@@ -25,24 +28,39 @@ export default function LandingPage() {
   const waLink = `https://wa.me/${whatsappNumber}?text=${waMessage}`
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans relative overflow-x-hidden selection:bg-cyan-500 selection:text-slate-950">
       
-      {/* Navbar Minimalis */}
-      <nav className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-500/30">
-              <Store className="w-5 h-5" />
+      {/* Dynamic Background Glow Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-cyan-500/15 via-emerald-500/5 to-transparent blur-[140px] rounded-full" />
+        <div className="absolute top-1/3 left-[-100px] w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[160px]" />
+        <div className="absolute top-2/3 right-[-100px] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[160px]" />
+      </div>
+
+      {/* Grid Pattern Overlay */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0" />
+
+      {/* Sticky Header / Navbar */}
+      <nav className="border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-2xl sticky top-0 z-50 transition-all">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+          
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-2xl text-slate-950 font-bold shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+              <Store className="w-5 h-5 stroke-[2.5]" />
             </div>
-            <span className="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-300">
-              GrosirPOS Pro
-            </span>
+            <div className="flex flex-col">
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+                GrosirPOS <span className="text-cyan-400 font-mono text-sm uppercase tracking-wider">Pro</span>
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link 
               href="/pos" 
-              className="text-xs font-semibold text-slate-400 hover:text-white px-3 py-2 rounded-lg transition"
+              className="text-xs sm:text-sm font-semibold text-slate-300 hover:text-cyan-400 px-3.5 py-2 rounded-xl transition hover:bg-slate-900 border border-transparent hover:border-slate-800"
             >
               Coba POS
             </Link>
@@ -50,191 +68,240 @@ export default function LandingPage() {
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-indigo-600/20 transition active:scale-95"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-bold text-xs sm:text-sm px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.25)] transition-all active:scale-95"
             >
-              Coba Demo Gratis
+              <span>Demo Gratis</span>
+              <ChevronRight className="w-4 h-4 stroke-[3]" />
             </a>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-12 pb-20 md:pt-20 md:pb-32 overflow-hidden">
-        {/* Glow Effects background */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
-        
-        <div className="max-w-4xl mx-auto px-4 text-center relative z-10 space-y-6">
-          <div className="inline-flex items-center gap-2 bg-indigo-950/80 border border-indigo-500/30 px-3.5 py-1.5 rounded-full text-indigo-300 text-xs font-semibold shadow-inner">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+      <section className="relative pt-12 pb-20 md:pt-24 md:pb-32 z-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-8">
+          
+          {/* Top Pill Badge */}
+          <div className="inline-flex items-center gap-2 bg-slate-900/90 border border-cyan-500/30 px-4 py-2 rounded-full text-cyan-300 text-xs sm:text-sm font-semibold shadow-[0_0_15px_rgba(6,182,212,0.1)] backdrop-blur-xl">
+            <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
             <span>Sistem POS khusus Toko Grosir & Distributor</span>
           </div>
 
-          <h1 className="text-3xl md:text-6xl font-black text-white tracking-tight leading-tight md:leading-tight">
-            Atur Stok Multi-Satuan & Kasir Grosir <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">Tanpa Pusing</span>
+          {/* Main Title */}
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-[1.15] max-w-4xl mx-auto">
+            Atur Stok Multi-Satuan & Kasir Grosir{' '}
+            <span className="bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">
+              Tanpa Pusing
+            </span>
           </h1>
 
-          <p className="text-sm md:text-lg text-slate-400 max-w-2xl mx-auto font-normal leading-relaxed">
+          {/* Subtitle */}
+          <p className="text-sm sm:text-base md:text-lg text-slate-400 max-w-2xl mx-auto font-normal leading-relaxed">
             Kelola penjualan eceran (Pcs) hingga grosir (Dus/Karton), scan barcode langsung dari HP, dan pantau stok otomatis secara real-time.
           </p>
 
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+          {/* CTA Buttons */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto sm:max-w-none">
             <a
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm px-8 py-4 rounded-2xl shadow-xl shadow-indigo-600/30 transition-all active:scale-95"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-extrabold text-sm px-8 py-4 rounded-2xl shadow-[0_0_30px_rgba(6,182,212,0.3)] transition-all active:scale-95"
             >
               <span>Hubungi Kami via WhatsApp</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 stroke-[3]" />
             </a>
             <Link
               href="/products"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-semibold text-sm px-6 py-4 rounded-2xl transition"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900/80 border border-slate-800 hover:border-slate-700 hover:bg-slate-800/80 text-slate-200 font-bold text-sm px-7 py-4 rounded-2xl backdrop-blur-xl transition"
             >
-              Lihat Simulasi Sistem
+              <Boxes className="w-4 h-4 text-cyan-400" />
+              <span>Lihat Simulasi Sistem</span>
             </Link>
           </div>
 
           {/* Feature Badges */}
-          <div className="pt-8 flex flex-wrap justify-center gap-6 text-xs text-slate-400 font-medium">
-            <div className="flex items-center gap-1.5">
+          <div className="pt-6 flex flex-wrap justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-slate-400 font-medium">
+            <div className="flex items-center gap-2 bg-slate-900/40 border border-slate-800/80 px-3.5 py-1.5 rounded-xl">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>Tanpa Alat Tambahan Mahal</span>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2 bg-slate-900/40 border border-slate-800/80 px-3.5 py-1.5 rounded-xl">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>Multi-Device (Laptop/Tablet/HP)</span>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2 bg-slate-900/40 border border-slate-800/80 px-3.5 py-1.5 rounded-xl">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>Penyimpanan Cloud Aman</span>
             </div>
           </div>
         </div>
 
-        {/* Visual Mockup Card */}
-        <div className="max-w-5xl mx-auto px-4 mt-12 relative z-10">
-          <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl backdrop-blur">
-            <div className="bg-slate-950 rounded-2xl p-6 border border-slate-800/60 overflow-hidden relative">
-              <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-800 text-xs text-slate-400">
+        {/* Visual App Mockup Preview */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-14 relative z-10">
+          <div className="p-2 sm:p-3 bg-slate-900/70 border border-slate-800/80 rounded-3xl shadow-2xl backdrop-blur-2xl">
+            <div className="bg-slate-950 rounded-2xl p-5 sm:p-7 border border-slate-800/80 overflow-hidden relative">
+              
+              {/* Card Header Bar */}
+              <div className="flex items-center justify-between pb-5 mb-6 border-b border-slate-800/80 text-xs text-slate-400">
                 <div className="flex gap-2">
                   <div className="w-3 h-3 rounded-full bg-rose-500/80" />
                   <div className="w-3 h-3 rounded-full bg-amber-500/80" />
                   <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
                 </div>
-                <span className="font-mono text-[11px] bg-slate-900 px-3 py-1 rounded-full border border-slate-800 text-indigo-400">
-                  Preview Aplikasi Kasir & Inventory
-                </span>
+                <div className="inline-flex items-center gap-2 bg-slate-900 px-3.5 py-1 rounded-full border border-slate-800 text-cyan-400 font-mono text-[11px]">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  <span>Preview Live Dashboard & Inventory</span>
+                </div>
               </div>
 
-              {/* Grid Mini Mockup */}
+              {/* Grid Mini Mockup Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-                <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
+                
+                {/* Item 1 */}
+                <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800 space-y-3 relative group hover:border-cyan-500/30 transition">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-white">Minyak Goreng 2L</span>
-                    <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded">ADA</span>
+                    <span className="text-xs sm:text-sm font-bold text-slate-100">Minyak Goreng 2L</span>
+                    <span className="text-[10px] font-extrabold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2.5 py-0.5 rounded-full">
+                      ADA
+                    </span>
                   </div>
-                  <div className="text-[11px] text-slate-400">Satuan: Pcs | Dus (Isi 6)</div>
-                  <div className="text-xs font-bold text-indigo-400">Rp 34.000 / Pcs</div>
+                  <div className="text-[11px] text-slate-400 font-medium">Satuan: Pcs | Dus (Isi 6)</div>
+                  <div className="flex justify-between items-baseline pt-1">
+                    <span className="text-xs font-mono font-bold text-cyan-400">Rp 34.000 / Pcs</span>
+                    <span className="text-[10px] font-mono text-slate-500">Stok: 120</span>
+                  </div>
                 </div>
 
-                <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
+                {/* Item 2 */}
+                <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800 space-y-3 relative group hover:border-amber-500/30 transition">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-white">Beras Premium 5kg</span>
-                    <span className="text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">SEDIKIT</span>
+                    <span className="text-xs sm:text-sm font-bold text-slate-100">Beras Premium 5kg</span>
+                    <span className="text-[10px] font-extrabold bg-amber-500/10 border border-amber-500/30 text-amber-400 px-2.5 py-0.5 rounded-full">
+                      SEDIKIT
+                    </span>
                   </div>
-                  <div className="text-[11px] text-slate-400">Satuan: SAK | Karung</div>
-                  <div className="text-xs font-bold text-indigo-400">Rp 72.000 / SAK</div>
+                  <div className="text-[11px] text-slate-400 font-medium">Satuan: SAK | Karung</div>
+                  <div className="flex justify-between items-baseline pt-1">
+                    <span className="text-xs font-mono font-bold text-cyan-400">Rp 72.000 / SAK</span>
+                    <span className="text-[10px] font-mono text-slate-500">Stok: 8</span>
+                  </div>
                 </div>
 
-                <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
+                {/* Item 3 */}
+                <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800 space-y-3 relative group hover:border-rose-500/30 transition">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-white">Indomie Goreng</span>
-                    <span className="text-[10px] font-bold bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded">HABIS</span>
+                    <span className="text-xs sm:text-sm font-bold text-slate-100">Indomie Goreng</span>
+                    <span className="text-[10px] font-extrabold bg-rose-500/10 border border-rose-500/30 text-rose-400 px-2.5 py-0.5 rounded-full">
+                      HABIS
+                    </span>
                   </div>
-                  <div className="text-[11px] text-slate-400">Satuan: Pcs | Dus (Isi 40)</div>
-                  <div className="text-xs font-bold text-indigo-400">Rp 112.000 / Dus</div>
+                  <div className="text-[11px] text-slate-400 font-medium">Satuan: Pcs | Dus (Isi 40)</div>
+                  <div className="flex justify-between items-baseline pt-1">
+                    <span className="text-xs font-mono font-bold text-cyan-400">Rp 112.000 / Dus</span>
+                    <span className="text-[10px] font-mono text-slate-500">Stok: 0</span>
+                  </div>
                 </div>
+
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Comparison Section (Cara Lama vs Cara Modern) */}
-      <section className="py-16 bg-slate-900/50 border-y border-slate-800/80">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="text-center space-y-2 mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-white">Kenapa Harus Pindah ke GrosirPOS?</h2>
-            <p className="text-xs md:text-sm text-slate-400">Bandingkan kendala metode manual dengan kemudahan sistem digital kami.</p>
+      {/* Comparison Section (Cara Lama vs GrosirPOS) */}
+      <section className="py-20 bg-slate-900/40 border-y border-slate-800/80 relative z-10 backdrop-blur-lg">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="text-center space-y-3 mb-14">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white">
+              Kenapa Harus Pindah ke GrosirPOS?
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto">
+              Bandingkan kendala operasional metode manual dengan efisiensi sistem digital kami.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Cara Lama */}
-            <div className="bg-rose-950/20 border border-rose-900/40 p-6 rounded-2xl space-y-4">
-              <h3 className="font-bold text-rose-400 flex items-center gap-2 text-base">
-                <XCircle className="w-5 h-5" />
-                Cara Lama / Manual
-              </h3>
-              <ul className="space-y-3 text-xs md:text-sm text-slate-300">
-                <li className="flex items-start gap-2">
-                  <span className="text-rose-500 font-bold">•</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+            
+            {/* Cara Lama Card */}
+            <div className="bg-gradient-to-b from-rose-950/30 to-slate-900/60 border border-rose-500/20 p-6 sm:p-8 rounded-3xl space-y-5 shadow-xl">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                  <XCircle className="w-6 h-6" />
+                </div>
+                <h3 className="font-bold text-rose-300 text-lg">Cara Lama / Manual</h3>
+              </div>
+
+              <ul className="space-y-3.5 text-xs sm:text-sm text-slate-300">
+                <li className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-2 flex-shrink-0" />
                   <span>Bingung hitung stok saat barang dijual Pcs dan Dus bersamaan.</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-rose-500 font-bold">•</span>
+                <li className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-2 flex-shrink-0" />
                   <span>Stok sering selisih tanpa ketahuan barang hilang/rusak.</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-rose-500 font-bold">•</span>
+                <li className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-2 flex-shrink-0" />
                   <span>Kasir lambat karena harus hapalan atau ketik nama barang manual.</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-rose-500 font-bold">•</span>
+                <li className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-2 flex-shrink-0" />
                   <span>Harus beli alat barcode scanner tambahan yang mahal.</span>
                 </li>
               </ul>
             </div>
 
-            {/* Solusi GrosirPOS */}
-            <div className="bg-indigo-950/30 border border-indigo-500/40 p-6 rounded-2xl space-y-4">
-              <h3 className="font-bold text-indigo-400 flex items-center gap-2 text-base">
-                <CheckCircle2 className="w-5 h-5 text-indigo-400" />
-                Dengan GrosirPOS
-              </h3>
-              <ul className="space-y-3 text-xs md:text-sm text-slate-200">
-                <li className="flex items-start gap-2">
-                  <span className="text-indigo-400 font-bold">•</span>
+            {/* Solusi GrosirPOS Card */}
+            <div className="bg-gradient-to-b from-cyan-950/40 via-slate-900/70 to-emerald-950/30 border border-cyan-500/40 p-6 sm:p-8 rounded-3xl space-y-5 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+              
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  <CheckCircle2 className="w-6 h-6 text-cyan-400" />
+                </div>
+                <h3 className="font-bold text-cyan-300 text-lg">Dengan GrosirPOS</h3>
+              </div>
+
+              <ul className="space-y-3.5 text-xs sm:text-sm text-slate-200">
+                <li className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-2 flex-shrink-0" />
                   <span>Konversi otomatis! Jual 2 Dus, stok Pcs otomatis terpotong presisi.</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-indigo-400 font-bold">•</span>
+                <li className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-2 flex-shrink-0" />
                   <span>Badge status stok (ADA/SEDIKIT/HABIS) terpantau langsung.</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-indigo-400 font-bold">•</span>
+                <li className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-2 flex-shrink-0" />
                   <span>Scan Barcode super cepat langsung menggunakan Kamera HP/Tablet.</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-indigo-400 font-bold">•</span>
+                <li className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-2 flex-shrink-0" />
                   <span>Fitur Quick Adjust untuk mencatat barang masuk atau rusak instan.</span>
                 </li>
               </ul>
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* Feature Showcase Grid */}
-      <section className="py-20 max-w-6xl mx-auto px-4 space-y-12">
+      {/* Feature Showcase Grid Section */}
+      <section className="py-20 max-w-6xl mx-auto px-4 sm:px-6 space-y-12 z-10 relative">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <h2 className="text-2xl md:text-4xl font-extrabold text-white">Fitur Lengkap untuk Skala Usaha Grosir</h2>
-          <p className="text-xs md:text-sm text-slate-400">Dirancang fungsional tanpa fitur rumit yang tidak diperlukan.</p>
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-white">
+            Fitur Lengkap Skala Usaha Grosir
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400">
+            Dirancang fungsional tanpa fitur rumit yang tidak diperlukan.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/50 transition">
-            <div className="p-3 bg-indigo-600/10 text-indigo-400 rounded-xl w-fit mb-4">
+          
+          <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-300 backdrop-blur-xl group hover:-translate-y-1">
+            <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-2xl w-fit mb-4 group-hover:scale-110 transition-transform">
               <Layers className="w-6 h-6" />
             </div>
             <h3 className="font-bold text-white text-base mb-2">Multi-Satuan & Konversi</h3>
@@ -243,8 +310,8 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/50 transition">
-            <div className="p-3 bg-indigo-600/10 text-indigo-400 rounded-xl w-fit mb-4">
+          <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-300 backdrop-blur-xl group hover:-translate-y-1">
+            <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-2xl w-fit mb-4 group-hover:scale-110 transition-transform">
               <Smartphone className="w-6 h-6" />
             </div>
             <h3 className="font-bold text-white text-base mb-2">Scan Barcode Kamera HP</h3>
@@ -253,8 +320,8 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/50 transition">
-            <div className="p-3 bg-indigo-600/10 text-indigo-400 rounded-xl w-fit mb-4">
+          <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-300 backdrop-blur-xl group hover:-translate-y-1">
+            <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-2xl w-fit mb-4 group-hover:scale-110 transition-transform">
               <Zap className="w-6 h-6" />
             </div>
             <h3 className="font-bold text-white text-base mb-2">Penyesuaian Stok Cepat</h3>
@@ -263,8 +330,8 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/50 transition">
-            <div className="p-3 bg-indigo-600/10 text-indigo-400 rounded-xl w-fit mb-4">
+          <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-300 backdrop-blur-xl group hover:-translate-y-1">
+            <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-2xl w-fit mb-4 group-hover:scale-110 transition-transform">
               <QrCode className="w-6 h-6" />
             </div>
             <h3 className="font-bold text-white text-base mb-2">Pembayaran QRIS & Transfer</h3>
@@ -273,8 +340,8 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/50 transition">
-            <div className="p-3 bg-indigo-600/10 text-indigo-400 rounded-xl w-fit mb-4">
+          <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-300 backdrop-blur-xl group hover:-translate-y-1">
+            <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-2xl w-fit mb-4 group-hover:scale-110 transition-transform">
               <Printer className="w-6 h-6" />
             </div>
             <h3 className="font-bold text-white text-base mb-2">Cetak Struk Thermal</h3>
@@ -283,8 +350,8 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/50 transition">
-            <div className="p-3 bg-indigo-600/10 text-indigo-400 rounded-xl w-fit mb-4">
+          <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-300 backdrop-blur-xl group hover:-translate-y-1">
+            <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-2xl w-fit mb-4 group-hover:scale-110 transition-transform">
               <Package className="w-6 h-6" />
             </div>
             <h3 className="font-bold text-white text-base mb-2">Status Stok Real-Time</h3>
@@ -292,28 +359,31 @@ export default function LandingPage() {
               Indikator visual pintar (ADA, SEDIKIT, HABIS) membantu kasir mengetahui barang yang perlu di-restock secara instan.
             </p>
           </div>
+
         </div>
       </section>
 
       {/* Footer / CTA Section */}
-      <footer className="border-t border-slate-800/80 bg-slate-950 py-16 text-center">
+      <footer className="border-t border-slate-800/80 bg-slate-950/80 backdrop-blur-2xl py-16 text-center relative z-10">
         <div className="max-w-3xl mx-auto px-4 space-y-6">
-          <h2 className="text-2xl md:text-4xl font-extrabold text-white">Siap Digitalisasi Toko Grosir Anda?</h2>
-          <p className="text-xs md:text-sm text-slate-400 max-w-lg mx-auto">
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-white">
+            Siap Digitalisasi Toko Grosir Anda?
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
             Dapatkan akses demonstrasi sistem dan konsultasi gratis untuk kebutuhan operasional toko Anda hari ini.
           </p>
-          <div>
+          <div className="pt-2">
             <a
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm px-8 py-4 rounded-2xl shadow-xl shadow-indigo-600/30 transition active:scale-95"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm px-8 py-4 rounded-2xl shadow-[0_0_30px_rgba(6,182,212,0.3)] transition active:scale-95"
             >
               <span>Hubungi Kami Sekarang (WhatsApp)</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 stroke-[3]" />
             </a>
           </div>
-          <p className="text-[11px] text-slate-600 pt-8">
+          <p className="text-[11px] text-slate-600 pt-8 font-medium">
             © {new Date().getFullYear()} GrosirPOS Pro. All rights reserved.
           </p>
         </div>

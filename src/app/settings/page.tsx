@@ -16,7 +16,10 @@ import {
   MapPin,
   CreditCard,
   UserCheck,
-  UserX
+  UserX,
+  Sparkles,
+  Loader2,
+  RefreshCw
 } from 'lucide-react'
 
 interface StaffMember {
@@ -69,7 +72,7 @@ export default function SettingsPage() {
           setStorePhone(user.user_metadata?.store_phone || '081234567890')
           setStoreBank(user.user_metadata?.store_bank || 'BCA: 1234567890 a.n Rumah Bentang')
 
-          fetchStaffData(user.email || '')
+          fetchStaffData(user.email || '', name)
         }
       } catch (err) {
         console.error('Error loading settings:', err)
@@ -81,10 +84,10 @@ export default function SettingsPage() {
     loadData()
   }, [])
 
-  const fetchStaffData = (ownerEmail: string) => {
+  const fetchStaffData = (ownerEmail: string, ownerName: string) => {
     // Initial/Mock Data Karyawan dengan Status Approval
     setStaffList([
-      { id: '1', name: currentUserName || 'Pemilik Usaha', email: ownerEmail, role: 'owner', status: 'active' },
+      { id: '1', name: ownerName || 'Pemilik Usaha', email: ownerEmail, role: 'owner', status: 'active' },
       { id: '2', name: 'Kasir Shift Pagi', email: 'kasir1@rumahbentang.com', role: 'cashier', status: 'active' },
       { id: '3', name: 'Budi Santoso', email: 'budi@gmail.com', role: 'cashier', status: 'pending' }
     ])
@@ -158,31 +161,51 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 p-8 flex items-center justify-center text-slate-400">
-        Memuat Pengaturan Sistem...
+      <div className="min-h-screen bg-slate-950 p-8 flex flex-col items-center justify-center text-slate-400 space-y-3 font-sans">
+        <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+        <span className="text-xs font-semibold tracking-wider text-slate-500 uppercase">Memuat Pengaturan Sistem...</span>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 p-4 md:p-8 text-slate-100 font-sans">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-950 p-4 md:p-8 text-slate-100 font-sans selection:bg-cyan-500 selection:text-slate-950 relative overflow-x-hidden">
+      
+      {/* Background Ambient Glows */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 right-1/4 w-[600px] h-[300px] bg-gradient-to-b from-cyan-500/10 via-emerald-500/5 to-transparent blur-[140px] rounded-full" />
+        <div className="absolute bottom-10 left-[-100px] w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[160px]" />
+      </div>
+
+      <div className="max-w-6xl mx-auto space-y-6 relative z-10">
         
         {/* Header Section */}
-        <div className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700/80 shadow-sm flex items-center justify-between">
+        <div className="bg-slate-900/80 p-6 rounded-3xl border border-slate-800/80 shadow-2xl backdrop-blur-xl flex items-center justify-between">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">Pengaturan Toko & Hak Akses</h1>
-            <p className="text-xs md:text-sm text-slate-400 mt-1">Kelola identitas toko, informasi struk/rekening, dan persetujuan staf kasir</p>
+            <div className="flex items-center gap-2.5">
+              <div className="p-2.5 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-2xl text-slate-950 font-bold shadow-[0_0_20px_rgba(6,182,212,0.25)]">
+                <Store className="w-5 h-5 stroke-[2.5]" />
+              </div>
+              <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">
+                Pengaturan Toko & Hak Akses
+              </h1>
+            </div>
+            <p className="text-xs md:text-sm text-slate-400 mt-1">
+              Kelola identitas toko, informasi struk/rekening, dan persetujuan staf kasir.
+            </p>
           </div>
-          <div className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-xl text-xs font-bold">
+
+          <div className="hidden sm:inline-flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3.5 py-2 rounded-2xl text-xs font-extrabold shadow-inner">
             <ShieldCheck className="w-4 h-4" /> Multi-Tenant Active
           </div>
         </div>
 
         {/* Notifikasi Message */}
         {message && (
-          <div className={`p-4 rounded-xl text-xs font-semibold flex items-center gap-3 ${
-            message.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+          <div className={`p-4 rounded-2xl text-xs font-bold flex items-center gap-3 backdrop-blur-xl border ${
+            message.type === 'success' 
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+              : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
           }`}>
             {message.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
             <span>{message.text}</span>
@@ -192,68 +215,68 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* CARD 1: Form Profil Toko & Informasi Struk (2 COLS) */}
-          <div className="md:col-span-2 bg-slate-800/80 p-6 rounded-2xl border border-slate-700/80 shadow-sm space-y-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-700/50">
-              <span className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl">
+          <div className="md:col-span-2 bg-slate-900/80 p-6 rounded-3xl border border-slate-800/80 shadow-xl backdrop-blur-xl space-y-5">
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-800/80">
+              <span className="p-2.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-2xl">
                 <Store className="w-5 h-5" />
               </span>
               <div>
-                <h2 className="font-bold text-white">Profil Toko & Informasi Struk</h2>
-                <p className="text-[11px] text-slate-400">Data ini akan tampil pada Header Struk Penjualan</p>
+                <h2 className="font-extrabold text-white text-base">Profil Toko & Informasi Struk</h2>
+                <p className="text-[11px] text-slate-400">Data ini akan dicetak otomatis pada Header Struk Penjualan</p>
               </div>
             </div>
             
             <form onSubmit={handleUpdateStore} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-400 font-medium mb-1">Nama Toko / Usaha</label>
+                  <label className="block text-slate-400 font-bold mb-1.5">Nama Toko / Usaha</label>
                   <input 
                     type="text" 
                     value={storeName} 
                     onChange={(e) => setStoreName(e.target.value)}
-                    className="w-full bg-slate-900/60 border border-slate-700 p-2.5 rounded-xl text-white font-semibold focus:outline-none focus:border-indigo-500" 
+                    className="w-full bg-slate-950 border border-slate-800/80 p-3 rounded-xl text-white font-semibold focus:outline-none focus:border-cyan-500/50 transition placeholder:text-slate-600" 
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-medium mb-1">No. Telepon / WhatsApp Toko</label>
+                  <label className="block text-slate-400 font-bold mb-1.5">No. Telepon / WhatsApp Toko</label>
                   <div className="relative">
-                    <Phone className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+                    <Phone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                     <input 
                       type="text" 
                       value={storePhone} 
                       onChange={(e) => setStorePhone(e.target.value)}
                       placeholder="081234567890"
-                      className="w-full bg-slate-900/60 border border-slate-700 p-2.5 pl-9 rounded-xl text-white focus:outline-none focus:border-indigo-500" 
+                      className="w-full bg-slate-950 border border-slate-800/80 p-3 pl-10 rounded-xl text-white font-medium focus:outline-none focus:border-cyan-500/50 transition placeholder:text-slate-600" 
                     />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-400 font-medium mb-1">Alamat Lengkap Toko</label>
+                <label className="block text-slate-400 font-bold mb-1.5">Alamat Lengkap Toko</label>
                 <div className="relative">
-                  <MapPin className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+                  <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                   <input 
                     type="text" 
                     value={storeAddress} 
                     onChange={(e) => setStoreAddress(e.target.value)}
                     placeholder="Alamat fisik toko..."
-                    className="w-full bg-slate-900/60 border border-slate-700 p-2.5 pl-9 rounded-xl text-white focus:outline-none focus:border-indigo-500" 
+                    className="w-full bg-slate-950 border border-slate-800/80 p-3 pl-10 rounded-xl text-white font-medium focus:outline-none focus:border-cyan-500/50 transition placeholder:text-slate-600" 
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-400 font-medium mb-1">Info Rekening Pembayaran (Non-Tunai)</label>
+                <label className="block text-slate-400 font-bold mb-1.5">Info Rekening Pembayaran (Non-Tunai)</label>
                 <div className="relative">
-                  <CreditCard className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+                  <CreditCard className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                   <input 
                     type="text" 
                     value={storeBank} 
                     onChange={(e) => setStoreBank(e.target.value)}
                     placeholder="Contoh: BCA 123456789 a.n Toko Bentang"
-                    className="w-full bg-slate-900/60 border border-slate-700 p-2.5 pl-9 rounded-xl text-white focus:outline-none focus:border-indigo-500" 
+                    className="w-full bg-slate-950 border border-slate-800/80 p-3 pl-10 rounded-xl text-white font-medium focus:outline-none focus:border-cyan-500/50 transition placeholder:text-slate-600" 
                   />
                 </div>
               </div>
@@ -261,46 +284,55 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={savingStore}
-                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50"
+                className="w-full py-3 px-4 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-extrabold rounded-xl flex items-center justify-center gap-2 transition active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.2)] disabled:opacity-50"
               >
-                <Save className="w-4 h-4" />
-                {savingStore ? 'Menyimpan...' : 'Simpan Informasi Toko'}
+                {savingStore ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Menyimpan...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 stroke-[2.5]" />
+                    <span>Simpan Informasi Toko</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
 
           {/* CARD 2: Sesi Pengguna Saya (1 COL) */}
-          <div className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700/80 shadow-sm space-y-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-700/50">
-              <span className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl">
+          <div className="bg-slate-900/80 p-6 rounded-3xl border border-slate-800/80 shadow-xl backdrop-blur-xl space-y-5">
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-800/80">
+              <span className="p-2.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl">
                 <User className="w-5 h-5" />
               </span>
-              <h2 className="font-bold text-white">Sesi Akun Anda</h2>
+              <h2 className="font-extrabold text-white text-base">Sesi Akun Anda</h2>
             </div>
             
-            <div className="space-y-3 text-xs">
+            <div className="space-y-4 text-xs">
               <div>
-                <label className="block text-slate-400 font-medium mb-1">Nama Lengkap</label>
+                <label className="block text-slate-400 font-bold mb-1.5">Nama Lengkap</label>
                 <input 
                   type="text" 
                   readOnly 
                   value={currentUserName} 
-                  className="w-full bg-slate-900/40 border border-slate-800 p-2.5 rounded-xl text-slate-300 font-semibold focus:outline-none" 
+                  className="w-full bg-slate-950/60 border border-slate-800 p-3 rounded-xl text-slate-300 font-semibold focus:outline-none cursor-not-allowed" 
                 />
               </div>
               <div>
-                <label className="block text-slate-400 font-medium mb-1">Email Terdaftar</label>
+                <label className="block text-slate-400 font-bold mb-1.5">Email Terdaftar</label>
                 <input 
                   type="text" 
                   readOnly 
                   value={currentUserEmail} 
-                  className="w-full bg-slate-900/40 border border-slate-800 p-2.5 rounded-xl text-slate-400 focus:outline-none" 
+                  className="w-full bg-slate-950/60 border border-slate-800 p-3 rounded-xl text-slate-400 font-mono focus:outline-none cursor-not-allowed" 
                 />
               </div>
               <div>
-                <label className="block text-slate-400 font-medium mb-1">Level Hak Akses</label>
-                <span className="inline-block bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-lg font-bold capitalize">
-                  Pemilik Toko (Owner / Admin)
+                <label className="block text-slate-400 font-bold mb-1.5">Level Hak Akses</label>
+                <span className="inline-flex items-center gap-1.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1.5 rounded-xl font-extrabold text-[11px] capitalize">
+                  <Sparkles className="w-3.5 h-3.5" /> Pemilik Toko (Owner / Admin)
                 </span>
               </div>
             </div>
@@ -309,22 +341,22 @@ export default function SettingsPage() {
         </div>
 
         {/* CARD 3: MANAJEMEN STAF & APPROVAL KARYAWAN */}
-        <div className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700/80 shadow-sm space-y-6">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-700/50">
+        <div className="bg-slate-900/80 p-6 rounded-3xl border border-slate-800/80 shadow-2xl backdrop-blur-xl space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-800/80">
             <div className="flex items-center gap-3">
-              <span className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl">
+              <span className="p-2.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-2xl">
                 <KeyRound className="w-5 h-5" />
               </span>
               <div>
-                <h2 className="font-bold text-white">Hak Akses & Persetujuan Karyawan</h2>
-                <p className="text-xs text-slate-400">Atur staf yang diizinkan mengakses POS kasir toko {storeName}</p>
+                <h2 className="font-extrabold text-white text-base">Hak Akses & Persetujuan Karyawan</h2>
+                <p className="text-xs text-slate-400">Atur staf yang diizinkan mengakses POS kasir toko <span className="text-slate-200 font-bold">{storeName}</span></p>
               </div>
             </div>
           </div>
 
           {/* Form Registrasi Staf Baru */}
-          <form onSubmit={handleAddStaff} className="bg-slate-900/60 p-4 rounded-xl border border-slate-700/60 space-y-3 text-xs">
-            <p className="font-bold text-indigo-400 flex items-center gap-1.5">
+          <form onSubmit={handleAddStaff} className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80 space-y-3 text-xs">
+            <p className="font-extrabold text-cyan-400 flex items-center gap-1.5">
               <UserPlus className="w-4 h-4" /> Registrasi Staf / Kasir Baru
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -333,7 +365,7 @@ export default function SettingsPage() {
                 placeholder="Nama Karyawan"
                 value={newStaffName}
                 onChange={(e) => setNewStaffName(e.target.value)}
-                className="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-white focus:outline-none focus:border-indigo-500"
+                className="bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-white font-medium focus:outline-none focus:border-cyan-500/50 transition placeholder:text-slate-600"
                 required
               />
               <input 
@@ -341,21 +373,21 @@ export default function SettingsPage() {
                 placeholder="Email Karyawan"
                 value={newStaffEmail}
                 onChange={(e) => setNewStaffEmail(e.target.value)}
-                className="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-white focus:outline-none focus:border-indigo-500"
+                className="bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-white font-mono focus:outline-none focus:border-cyan-500/50 transition placeholder:text-slate-600"
                 required
               />
               <div className="flex gap-2">
                 <select 
                   value={newStaffRole}
                   onChange={(e: any) => setNewStaffRole(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-white focus:outline-none focus:border-indigo-500 flex-1"
+                  className="bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-white font-bold focus:outline-none focus:border-cyan-500/50 flex-1 cursor-pointer"
                 >
                   <option value="cashier">Kasir</option>
                   <option value="admin">Admin Toko</option>
                 </select>
                 <button
                   type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl transition-all shrink-0"
+                  className="bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl transition active:scale-95 shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.2)]"
                 >
                   Registrasi
                 </button>
@@ -364,45 +396,45 @@ export default function SettingsPage() {
           </form>
 
           {/* Tabel Karyawan & Tombol Approval */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-2xl border border-slate-800/80">
             <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-900/80 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-700/60">
+              <thead className="bg-slate-950/80 text-slate-400 uppercase font-black text-[10px] tracking-wider border-b border-slate-800/80">
                 <tr>
-                  <th className="p-3">Nama Staf</th>
-                  <th className="p-3">Email</th>
-                  <th className="p-3">Jabatan / Role</th>
-                  <th className="p-3">Status Approval</th>
-                  <th className="p-3 text-right">Aksi</th>
+                  <th className="p-3.5">Nama Staf</th>
+                  <th className="p-3.5">Email</th>
+                  <th className="p-3.5">Jabatan / Role</th>
+                  <th className="p-3.5">Status Approval</th>
+                  <th className="p-3.5 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/40">
+              <tbody className="divide-y divide-slate-800/60 bg-slate-900/30">
                 {staffList.map((staff) => (
-                  <tr key={staff.id} className="hover:bg-slate-700/20 transition-all">
-                    <td className="p-3 font-semibold text-white">{staff.name}</td>
-                    <td className="p-3 text-slate-400">{staff.email}</td>
-                    <td className="p-3">
-                      <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase ${
+                  <tr key={staff.id} className="hover:bg-slate-800/30 transition-all">
+                    <td className="p-3.5 font-bold text-white">{staff.name}</td>
+                    <td className="p-3.5 text-slate-400 font-mono">{staff.email}</td>
+                    <td className="p-3.5">
+                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border ${
                         staff.role === 'owner' 
-                          ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' 
+                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
                           : staff.role === 'admin'
-                          ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                          : 'bg-slate-700 text-slate-300'
+                          ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+                          : 'bg-slate-800 text-slate-300 border-slate-700'
                       }`}>
                         {staff.role}
                       </span>
                     </td>
-                    <td className="p-3">
+                    <td className="p-3.5">
                       {staff.role === 'owner' ? (
-                        <span className="text-emerald-400 font-bold flex items-center gap-1 text-[11px]">
+                        <span className="text-emerald-400 font-extrabold flex items-center gap-1 text-[11px]">
                           <UserCheck className="w-3.5 h-3.5" /> Verified Owner
                         </span>
                       ) : (
                         <button
                           onClick={() => handleToggleStatus(staff.id)}
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 transition-all ${
+                          className={`px-3 py-1 rounded-full text-[10px] font-extrabold inline-flex items-center gap-1.5 transition-all active:scale-95 border ${
                             staff.status === 'active'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
-                              : 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                              : 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20'
                           }`}
                           title="Klik untuk menyetujui / membatalkan akses"
                         >
@@ -414,17 +446,17 @@ export default function SettingsPage() {
                         </button>
                       )}
                     </td>
-                    <td className="p-3 text-right">
+                    <td className="p-3.5 text-right">
                       {staff.role !== 'owner' ? (
                         <button
                           onClick={() => handleDeleteStaff(staff.id, staff.name)}
-                          className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
+                          className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition active:scale-95"
                           title="Hapus Akses"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       ) : (
-                        <span className="text-[10px] text-slate-500 italic">Utama</span>
+                        <span className="text-[10px] text-slate-500 italic font-mono">Utama</span>
                       )}
                     </td>
                   </tr>

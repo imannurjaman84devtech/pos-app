@@ -15,7 +15,8 @@ import {
   ChevronRight,
   LogOut,
   Menu,
-  X
+  X,
+  Sparkles
 } from 'lucide-react'
 
 const menuItems = [
@@ -112,24 +113,24 @@ export default function Sidebar() {
       {/* ========================================================= */}
       {/* A. HEADER TOPBAR MOBILE (Hanya Tampil di Layar HP/Kecil)  */}
       {/* ========================================================= */}
-      <div className="md:hidden bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-black text-sm shadow-md">
+      <div className="md:hidden bg-[#080a1e]/90 backdrop-blur-xl border-b border-indigo-500/20 p-4 flex items-center justify-between sticky top-0 z-30 font-sans">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-600/30 border border-indigo-400/30">
             G
           </div>
           <div>
-            <h2 className="font-bold text-white text-xs tracking-wide">GROSIR POS</h2>
-            <p className="text-[10px] text-slate-400 truncate max-w-[150px]">{storeName || 'RUMAH BENTANG'}</p>
+            <h2 className="font-black text-white text-xs tracking-wider uppercase">GROSIR POS</h2>
+            <p className="text-[10px] text-indigo-300/80 truncate max-w-[150px] font-medium">{storeName || 'RUMAH BENTANG'}</p>
           </div>
         </div>
 
         {/* Tombol Hamburger (☰ / ✕) */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition-all"
+          className="p-2 text-slate-300 hover:text-white hover:bg-indigo-500/10 rounded-xl transition-all border border-transparent hover:border-indigo-500/20 cursor-pointer"
           aria-label="Toggle Navigation"
         >
-          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isOpen ? <X className="w-6 h-6 text-indigo-400" /> : <Menu className="w-6 h-6 text-indigo-400" />}
         </button>
       </div>
 
@@ -139,7 +140,7 @@ export default function Sidebar() {
       {isOpen && (
         <div 
           onClick={() => setIsOpen(false)} 
-          className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 md:hidden transition-opacity"
+          className="fixed inset-0 bg-[#050714]/80 backdrop-blur-md z-40 md:hidden transition-opacity"
         />
       )}
 
@@ -148,21 +149,24 @@ export default function Sidebar() {
       {/* ========================================================= */}
       <aside className={`
         fixed md:static top-0 bottom-0 left-0 z-50
-        w-64 bg-slate-900 text-slate-300 min-h-screen flex flex-col justify-between border-r border-slate-800 shrink-0
-        transition-transform duration-300 ease-in-out
+        w-64 bg-[#080a1e]/95 backdrop-blur-xl text-slate-300 min-h-screen flex flex-col justify-between border-r border-indigo-500/15 shrink-0 font-sans selection:bg-indigo-500 selection:text-white
+        transition-transform duration-300 ease-in-out shadow-[10px_0_30px_rgba(0,0,0,0.3)] md:shadow-none
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div>
           {/* Brand Header */}
-          <div className="p-6 border-b border-slate-800/80 flex items-center justify-between">
+          <div className="p-6 border-b border-indigo-500/15 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/30">
-                G
+              <div className="relative">
+                <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 blur-sm opacity-70 animate-pulse" />
+                <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-600/30 border border-indigo-400/40">
+                  G
+                </div>
               </div>
               <div>
-                <h2 className="font-bold text-white text-base leading-tight tracking-wide">GROSIR POS</h2>
-                <span className="text-[10px] font-semibold bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/30">
-                  PRO EDITION
+                <h2 className="font-black text-white text-base leading-tight tracking-wider">GROSIR POS</h2>
+                <span className="inline-flex items-center gap-1 text-[9px] font-bold bg-indigo-500/15 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30 tracking-widest uppercase mt-0.5">
+                  <Sparkles className="w-2.5 h-2.5 text-amber-400" /> PRO EDITION
                 </span>
               </div>
             </div>
@@ -170,23 +174,23 @@ export default function Sidebar() {
             {/* Tombol X Tutup (Mobile Only) */}
             <button 
               onClick={() => setIsOpen(false)}
-              className="md:hidden text-slate-400 hover:text-white p-1"
+              className="md:hidden text-slate-400 hover:text-white p-1 hover:bg-indigo-500/10 rounded-lg transition"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Store Indicator */}
-          <div className="mx-4 my-4 p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg shrink-0">
+          <div className="mx-4 my-4 p-3 bg-[#111638]/70 rounded-2xl border border-indigo-500/20 flex items-center gap-3 shadow-inner">
+            <div className="p-2 bg-gradient-to-br from-indigo-500/20 to-blue-500/10 text-indigo-400 rounded-xl border border-indigo-500/30 shrink-0">
               <Store className="w-4 h-4" />
             </div>
             <div className="overflow-hidden">
-              <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Toko Aktif</p>
+              <p className="text-[9px] uppercase font-bold text-slate-400 tracking-widest">Toko Aktif</p>
               {loading ? (
-                <div className="h-4 w-28 bg-slate-700/50 animate-pulse rounded mt-0.5" />
+                <div className="h-4 w-28 bg-indigo-950/50 animate-pulse rounded mt-1" />
               ) : (
-                <p className="text-xs font-bold text-white truncate" title={storeName}>
+                <p className="text-xs font-bold text-white truncate tracking-wide" title={storeName}>
                   {storeName}
                 </p>
               )}
@@ -194,7 +198,7 @@ export default function Sidebar() {
           </div>
 
           {/* Navigation Menu */}
-          <nav className="px-3 space-y-1">
+          <nav className="px-3 space-y-1.5">
             {menuItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -203,17 +207,25 @@ export default function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 group relative overflow-hidden ${
                     isActive
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/30 border border-indigo-400/30'
+                      : 'text-slate-400 hover:text-slate-100 hover:bg-[#111638]/50 border border-transparent'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`} />
-                    <span>{item.name}</span>
+                  {/* Glowing Effect for Active Menu */}
+                  {isActive && (
+                    <div className="absolute top-0 left-0 w-full h-full bg-indigo-400/10 blur-sm pointer-events-none" />
+                  )}
+
+                  <div className="flex items-center gap-3 relative z-10">
+                    <Icon className={`w-4 h-4 transition-transform duration-300 group-hover:scale-110 ${
+                      isActive ? 'text-white' : 'text-indigo-400/70 group-hover:text-indigo-300'
+                    }`} />
+                    <span className="tracking-wide">{item.name}</span>
                   </div>
-                  {isActive && <ChevronRight className="w-3.5 h-3.5 stroke-[3]" />}
+                  
+                  {isActive && <ChevronRight className="w-3.5 h-3.5 stroke-[3] text-indigo-200 relative z-10" />}
                 </Link>
               )
             })}
@@ -221,21 +233,21 @@ export default function Sidebar() {
         </div>
 
         {/* Footer Profile & Logout */}
-        <div className="p-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
+        <div className="p-4 border-t border-indigo-500/15 bg-[#060818]/60 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-9 h-9 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-white font-bold text-sm shrink-0 uppercase">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 border border-indigo-400/40 flex items-center justify-center text-white font-black text-sm shrink-0 uppercase shadow-md shadow-indigo-600/20">
               {avatarInitial}
             </div>
             <div className="overflow-hidden">
               {loading ? (
                 <div className="space-y-1">
-                  <div className="h-3.5 w-20 bg-slate-700/50 animate-pulse rounded" />
-                  <div className="h-2.5 w-14 bg-slate-700/40 animate-pulse rounded" />
+                  <div className="h-3.5 w-20 bg-indigo-950/50 animate-pulse rounded" />
+                  <div className="h-2.5 w-14 bg-indigo-950/40 animate-pulse rounded" />
                 </div>
               ) : (
                 <>
-                  <p className="text-xs font-bold text-white truncate" title={userName}>{userName}</p>
-                  <p className="text-[10px] text-slate-400 truncate capitalize">{userRole}</p>
+                  <p className="text-xs font-bold text-white truncate tracking-wide" title={userName}>{userName}</p>
+                  <p className="text-[10px] text-indigo-300/70 truncate capitalize font-semibold">{userRole}</p>
                 </>
               )}
             </div>
@@ -244,7 +256,7 @@ export default function Sidebar() {
           <button
             onClick={handleLogout}
             title="Keluar dari Aplikasi"
-            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all shrink-0"
+            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-500/30 rounded-xl transition-all shrink-0 cursor-pointer active:scale-95"
           >
             <LogOut className="w-4 h-4" />
           </button>

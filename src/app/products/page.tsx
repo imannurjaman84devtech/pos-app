@@ -16,7 +16,12 @@ import {
   Layers,
   Edit2,
   PlusCircle,
-  MinusCircle
+  MinusCircle,
+  AlertCircle,
+  CheckCircle2,
+  SlidersHorizontal,
+  Box,
+  Tag
 } from 'lucide-react'
 
 interface UnitInput {
@@ -215,26 +220,37 @@ export default function ProductsPage() {
     }
   }
 
-  const inputStyle = "w-full border border-slate-200 bg-slate-50/50 p-2.5 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm placeholder:text-slate-400"
+  const inputStyle = "w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-100 focus:outline-none focus:border-cyan-500/80 transition-all font-medium text-xs sm:text-sm placeholder:text-slate-600"
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 font-sans text-slate-900">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 md:p-10 font-sans relative">
+      
+      {/* Glow Backdrops */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[140px]" />
+        <div className="absolute bottom-10 right-10 w-[450px] h-[450px] bg-emerald-500/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 max-w-6xl mx-auto space-y-6">
         
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-                <Package className="w-6 h-6" />
-              </span>
-              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Katalog Produk Grosir</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/70 border border-slate-800/80 backdrop-blur-2xl p-6 rounded-3xl shadow-xl shadow-cyan-950/10">
+          <div className="flex items-start gap-4">
+            <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+              <Package className="w-7 h-7" />
             </div>
-            <p className="text-xs md:text-sm text-slate-500 mt-1 pl-10">Kelola master data barang, barcode, stok, dan konversi multi-unit secara terpusat</p>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold tracking-wide bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">
+                Katalog Produk Grosir
+              </h1>
+              <p className="text-xs md:text-sm text-slate-400 mt-1">
+                Kelola master data barang, barcode, stok, dan konversi multi-unit secara terpusat
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-[0.98]"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-bold px-5 py-3 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.25)] transition-all active:scale-[0.98] text-xs sm:text-sm"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
             <span>Tambah Produk</span>
@@ -242,40 +258,42 @@ export default function ProductsPage() {
         </div>
 
         {/* Tabel / Content Container */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div className="bg-slate-900/70 border border-slate-800/80 backdrop-blur-2xl rounded-3xl shadow-xl overflow-hidden">
           {loading ? (
-            <div className="p-12 text-center text-slate-400 flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-              <p className="text-sm font-medium">Memuat katalog produk...</p>
+            <div className="p-16 text-center text-slate-400 flex flex-col items-center justify-center gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+              <p className="text-xs font-medium tracking-wide text-slate-400">Memuat katalog produk...</p>
             </div>
           ) : products.length === 0 ? (
-            <div className="p-12 text-center text-slate-500 flex flex-col items-center gap-2">
-              <Sparkles className="w-10 h-10 text-slate-300" />
-              <p className="font-semibold text-slate-700">Belum Ada Produk Tersedia</p>
-              <p className="text-xs text-slate-400 max-w-sm">Mulai tambahkan produk grosir dan atur harga satuannya untuk kemudahan kasir.</p>
+            <div className="p-16 text-center text-slate-500 flex flex-col items-center justify-center gap-3">
+              <div className="p-4 rounded-2xl bg-slate-800/50 border border-slate-700/50 text-slate-400">
+                <Sparkles className="w-8 h-8 text-cyan-400" />
+              </div>
+              <p className="font-semibold text-slate-300 text-sm">Belum Ada Produk Tersedia</p>
+              <p className="text-xs text-slate-500 max-w-sm">Mulai tambahkan produk grosir dan atur harga satuannya untuk kemudahan transaksi kasir.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <tr className="bg-slate-950/60 border-b border-slate-800/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     <th className="p-4 pl-6">Nama Produk / Barcode</th>
                     <th className="p-4">Status & Jumlah Stok</th>
                     <th className="p-4">Pengaturan Satuan & Harga</th>
                     <th className="p-4 pr-6 text-center">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-sm">
+                <tbody className="divide-y divide-slate-800/50 text-xs sm:text-sm">
                   {products.map(p => {
                     const baseUnitName = p.product_units?.find(u => u.is_base_unit)?.unit_name || 'Unit'
                     const stock = p.stock_in_base_unit
 
                     return (
-                      <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                      <tr key={p.id} className="hover:bg-slate-800/30 transition-colors">
                         <td className="p-4 pl-6">
-                          <div className="font-bold text-slate-800">{p.name}</div>
-                          <div className="inline-flex items-center gap-1 text-xs text-slate-400 font-mono mt-0.5">
-                            <Barcode className="w-3.5 h-3.5" />
+                          <div className="font-bold text-slate-100">{p.name}</div>
+                          <div className="inline-flex items-center gap-1.5 text-xs text-slate-400 font-mono mt-1">
+                            <Barcode className="w-3.5 h-3.5 text-cyan-400" />
                             <span>{p.barcode || 'Tanpa Barcode'}</span>
                           </div>
                         </td>
@@ -284,22 +302,22 @@ export default function ProductsPage() {
                         <td className="p-4">
                           <div className="flex flex-col gap-1.5 items-start">
                             {stock <= 0 ? (
-                              <span className="text-[10px] font-extrabold bg-rose-100 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full">
+                              <span className="text-[10px] font-extrabold bg-rose-500/10 border border-rose-500/30 text-rose-400 px-2.5 py-0.5 rounded-full">
                                 HABIS
                               </span>
                             ) : stock <= 10 ? (
-                              <span className="text-[10px] font-extrabold bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                              <span className="text-[10px] font-extrabold bg-amber-500/10 border border-amber-500/30 text-amber-400 px-2.5 py-0.5 rounded-full">
                                 SEDIKIT
                               </span>
                             ) : (
-                              <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+                              <span className="text-[10px] font-extrabold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2.5 py-0.5 rounded-full">
                                 ADA
                               </span>
                             )}
 
-                            <div className="inline-flex items-baseline gap-1 bg-slate-100/80 px-2.5 py-1 rounded-lg">
-                              <span className="font-bold text-slate-800 text-base">{stock}</span>
-                              <span className="text-xs font-medium text-slate-500">{baseUnitName}</span>
+                            <div className="inline-flex items-baseline gap-1.5 bg-slate-950/80 border border-slate-800 px-3 py-1 rounded-lg">
+                              <span className="font-bold text-cyan-400 text-base font-mono">{stock}</span>
+                              <span className="text-xs font-medium text-slate-400">{baseUnitName}</span>
                             </div>
                           </div>
                         </td>
@@ -311,15 +329,15 @@ export default function ProductsPage() {
                                 key={u.id} 
                                 className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
                                   u.is_base_unit 
-                                    ? 'bg-indigo-50/60 border-indigo-200/80 text-indigo-900' 
-                                    : 'bg-emerald-50/60 border-emerald-200/80 text-emerald-900'
+                                    ? 'bg-cyan-950/30 border-cyan-500/30 text-cyan-300' 
+                                    : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
                                 }`}
                               >
                                 <span className="font-semibold">{u.unit_name}</span>
-                                <span className="text-slate-400 mx-1.5">|</span>
-                                <span className="text-slate-500">Isi {u.conversion_factor}</span>
-                                <span className="text-slate-400 mx-1.5">|</span>
-                                <strong className="font-bold">Rp {u.price.toLocaleString('id-ID')}</strong>
+                                <span className="text-slate-600 mx-1.5">|</span>
+                                <span className="text-slate-400">Isi {u.conversion_factor}</span>
+                                <span className="text-slate-600 mx-1.5">|</span>
+                                <strong className="font-bold text-slate-100">Rp {u.price.toLocaleString('id-ID')}</strong>
                               </div>
                             ))}
                           </div>
@@ -327,14 +345,14 @@ export default function ProductsPage() {
 
                         {/* Tombol Aksi (Kelola Stok & Hapus) */}
                         <td className="p-4 pr-6">
-                          <div className="flex items-center justify-center gap-1.5">
+                          <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => {
                                 setStockModalProd(p)
                                 setAdjustType('add')
                                 setAdjustAmount(0)
                               }}
-                              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition"
+                              className="p-2 text-cyan-400 hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/20 rounded-xl transition"
                               title="Tambah/Kurang Stok"
                             >
                               <Edit2 className="w-4 h-4" />
@@ -342,7 +360,7 @@ export default function ProductsPage() {
 
                             <button
                               onClick={() => handleDeleteProduct(p.id, p.name)}
-                              className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition"
+                              className="p-2 text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 rounded-xl transition"
                               title="Hapus Produk"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -361,17 +379,22 @@ export default function ProductsPage() {
 
       {/* Modal Input Produk Baru */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-40 transition-all">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-100">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 transition-all">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
             
-            <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">Tambah Produk & Satuan Grosir</h2>
-                <p className="text-xs text-slate-500">Lengkapi rincian informasi item dan variasi harganya</p>
+            <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  <Box className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-100">Tambah Produk & Satuan Grosir</h2>
+                  <p className="text-xs text-slate-400">Lengkapi rincian informasi item dan variasi harganya</p>
+                </div>
               </div>
               <button 
                 onClick={() => setIsModalOpen(false)} 
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition"
+                className="p-2 text-slate-400 hover:text-slate-200 rounded-xl hover:bg-slate-800 transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -380,7 +403,7 @@ export default function ProductsPage() {
             <form onSubmit={handleSaveProduct} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Nama Produk *</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Nama Produk *</label>
                   <input
                     type="text"
                     required
@@ -391,7 +414,7 @@ export default function ProductsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Barcode / SKU (Opsional)</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Barcode / SKU (Opsional)</label>
                   <div className="relative flex items-center">
                     <input
                       type="text"
@@ -403,7 +426,7 @@ export default function ProductsPage() {
                     <button
                       type="button"
                       onClick={() => setIsScannerOpen(true)}
-                      className="absolute right-2 p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition"
+                      className="absolute right-2 p-1.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/20 transition"
                       title="Scan lewat Kamera HP"
                     >
                       <Camera className="w-4 h-4" />
@@ -413,38 +436,38 @@ export default function ProductsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Stok Awal (Dalam Satuan Dasar/Eceran)</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Stok Awal (Dalam Satuan Dasar/Eceran)</label>
                 <input
                   type="number"
                   min="0"
                   value={initialStock}
                   onChange={e => setInitialStock(Number(e.target.value))}
-                  className={inputStyle}
+                  className={`${inputStyle} font-mono font-bold text-cyan-400`}
                 />
               </div>
 
               {/* Dynamic Unit Form */}
               <div className="pt-2">
                 <div className="flex justify-between items-center mb-3">
-                  <div className="flex items-center gap-1.5">
-                    <Layers className="w-4 h-4 text-indigo-600" />
-                    <label className="block text-xs font-bold text-slate-800">Pengaturan Multi-Satuan & Harga *</label>
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-cyan-400" />
+                    <label className="block text-xs font-semibold text-slate-200">Pengaturan Multi-Satuan & Harga *</label>
                   </div>
                   <button
                     type="button"
                     onClick={handleAddUnitInput}
-                    className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100/70 font-semibold px-3 py-1.5 rounded-xl transition"
+                    className="inline-flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 font-semibold px-3 py-1.5 rounded-xl transition"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Tambah Satuan Grosir</span>
                   </button>
                 </div>
 
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {units.map((unit, idx) => (
-                    <div key={idx} className="flex items-center gap-2 bg-slate-50/80 p-3 rounded-2xl border border-slate-200/70">
+                    <div key={idx} className="flex items-center gap-2 bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
                       <div className="w-1/3">
-                        <label className="block text-[10px] text-slate-400 font-bold mb-1">Satuan</label>
+                        <label className="block text-[10px] text-slate-400 font-semibold mb-1">Satuan</label>
                         <input
                           type="text"
                           required
@@ -456,7 +479,7 @@ export default function ProductsPage() {
                       </div>
 
                       <div className="w-1/4">
-                        <label className="block text-[10px] text-slate-400 font-bold mb-1">Isi (Pcs)</label>
+                        <label className="block text-[10px] text-slate-400 font-semibold mb-1">Isi (Pcs)</label>
                         <input
                           type="number"
                           min="1"
@@ -464,12 +487,12 @@ export default function ProductsPage() {
                           disabled={unit.is_base_unit}
                           value={unit.conversion_factor}
                           onChange={e => handleUnitChange(idx, 'conversion_factor', Number(e.target.value))}
-                          className={`${inputStyle} ${unit.is_base_unit ? 'opacity-60 cursor-not-allowed' : ''}`}
+                          className={`${inputStyle} ${unit.is_base_unit ? 'opacity-40 cursor-not-allowed' : ''}`}
                         />
                       </div>
 
                       <div className="w-1/3">
-                        <label className="block text-[10px] text-slate-400 font-bold mb-1">Harga (Rp)</label>
+                        <label className="block text-[10px] text-slate-400 font-semibold mb-1">Harga (Rp)</label>
                         <input
                           type="number"
                           min="0"
@@ -485,7 +508,7 @@ export default function ProductsPage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveUnitInput(idx)}
-                            className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition"
+                            className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition"
                             title="Hapus Satuan"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -498,18 +521,18 @@ export default function ProductsPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-200 font-semibold text-slate-600 hover:bg-slate-50 text-sm transition"
+                  className="px-5 py-2.5 rounded-xl border border-slate-800 font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 text-xs sm:text-sm transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-100 transition disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-bold text-xs sm:text-sm shadow-[0_0_15px_rgba(6,182,212,0.25)] transition disabled:opacity-40"
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   <span>{submitting ? 'Menyimpan...' : 'Simpan Produk'}</span>
@@ -522,30 +545,33 @@ export default function ProductsPage() {
 
       {/* Modal Quick Adjust Stock (Penyesuaian Stok Cepat) */}
       {stockModalProd && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-800 text-base">Penyesuaian Stok</h3>
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+              <h3 className="font-bold text-slate-200 text-sm sm:text-base flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-cyan-400" />
+                Penyesuaian Stok
+              </h3>
               <button 
                 onClick={() => setStockModalProd(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+                className="p-1 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-500 mb-1">Produk: <strong className="text-slate-800">{stockModalProd.name}</strong></p>
-            <p className="text-xs text-slate-500 mb-4">Stok Saat Ini: <span className="font-bold text-indigo-600">{stockModalProd.stock_in_base_unit}</span></p>
+            <p className="text-xs text-slate-400 mb-1">Produk: <strong className="text-slate-200">{stockModalProd.name}</strong></p>
+            <p className="text-xs text-slate-400 mb-4">Stok Saat Ini: <span className="font-bold font-mono text-cyan-400">{stockModalProd.stock_in_base_unit}</span></p>
 
             <form onSubmit={handleUpdateStock} className="space-y-4">
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setAdjustType('add')}
-                  className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold border transition ${
+                  className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border transition ${
                     adjustType === 'add' 
-                      ? 'bg-emerald-50 border-emerald-500 text-emerald-700' 
-                      : 'bg-slate-50 border-slate-200 text-slate-600'
+                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400' 
+                      : 'bg-slate-950 border-slate-800 text-slate-400'
                   }`}
                 >
                   <PlusCircle className="w-4 h-4" />
@@ -555,19 +581,19 @@ export default function ProductsPage() {
                 <button
                   type="button"
                   onClick={() => setAdjustType('reduce')}
-                  className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold border transition ${
+                  className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border transition ${
                     adjustType === 'reduce' 
-                      ? 'bg-rose-50 border-rose-500 text-rose-700' 
-                      : 'bg-slate-50 border-slate-200 text-slate-600'
+                      ? 'bg-rose-500/10 border-rose-500/40 text-rose-400' 
+                      : 'bg-slate-950 border-slate-800 text-slate-400'
                   }`}
                 >
                   <MinusCircle className="w-4 h-4" />
-                  <span>Stok Keluar / Rusak</span>
+                  <span>Stok Keluar</span>
                 </button>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Jumlah (Satuan Dasar)</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Jumlah (Satuan Dasar)</label>
                 <input
                   type="number"
                   min="1"
@@ -575,14 +601,14 @@ export default function ProductsPage() {
                   value={adjustAmount || ''}
                   onChange={e => setAdjustAmount(Number(e.target.value))}
                   placeholder="Masukkan Qty..."
-                  className={inputStyle}
+                  className={`${inputStyle} font-mono font-bold text-cyan-400`}
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting || adjustAmount <= 0}
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition disabled:opacity-50"
+                className="w-full py-3 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-bold rounded-xl text-xs sm:text-sm transition disabled:opacity-40 shadow-[0_0_15px_rgba(6,182,212,0.25)]"
               >
                 {submitting ? 'Memproses...' : 'Simpan Penyesuaian'}
               </button>
@@ -593,21 +619,21 @@ export default function ProductsPage() {
 
       {/* Modal Kamera Barcode Scanner */}
       {isScannerOpen && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl relative text-center">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative text-center">
             <button
               onClick={() => setIsScannerOpen(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-200 rounded-full hover:bg-slate-800"
             >
               <X className="w-5 h-5" />
             </button>
             
-            <h3 className="font-bold text-slate-800 text-lg mb-1">Arahkan ke Barcode</h3>
-            <p className="text-xs text-slate-500 mb-4">Posisikan kode batang di tengah kotak kamera</p>
+            <h3 className="font-bold text-slate-200 text-base mb-1">Arahkan ke Barcode</h3>
+            <p className="text-xs text-slate-400 mb-4">Posisikan kode batang di tengah kotak kamera</p>
             
-            <div id="reader" className="overflow-hidden rounded-2xl border-2 border-indigo-500"></div>
+            <div id="reader" className="overflow-hidden rounded-2xl border-2 border-cyan-500/80 bg-slate-950"></div>
 
-            <p className="text-[11px] text-slate-400 mt-4">Pindaian akan memicu bunyi bip dan otomatis mengisi kolom barcode.</p>
+            <p className="text-[11px] text-slate-500 mt-4">Pindaian akan memicu bunyi bip dan otomatis mengisi kolom barcode.</p>
           </div>
         </div>
       )}
