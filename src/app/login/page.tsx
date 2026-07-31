@@ -1,15 +1,29 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link' // <--- Tambahan import Link
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabaseClient'
+import { 
+  ShoppingCart, 
+  User, 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  ShieldCheck, 
+  Zap, 
+  Headphones, 
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  
   const router = useRouter()
   const supabase = createClient()
 
@@ -34,81 +48,161 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans">
-      <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl border border-slate-100">
-        {/* Header / Brand Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl text-white text-3xl font-black mb-3 shadow-lg shadow-blue-500/30">
-            🛒
+    <div className="min-h-screen w-full bg-[#050714] text-slate-200 flex items-center justify-center p-4 relative overflow-hidden font-sans selection:bg-indigo-500 selection:text-white">
+      
+      {/* Background Decorative Glow Lines & Grid */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-[#050714] to-[#050714] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 blur-[140px] rounded-full pointer-events-none" />
+      
+      {/* Decorative Side Glow Lines */}
+      <div className="hidden lg:block absolute left-12 top-1/2 -translate-y-1/2 opacity-20 pointer-events-none">
+        <div className="w-48 h-48 border-l-2 border-t-2 border-indigo-500 transform -rotate-45" />
+      </div>
+      <div className="hidden lg:block absolute right-12 top-1/2 -translate-y-1/2 opacity-20 pointer-events-none">
+        <div className="w-48 h-48 border-r-2 border-t-2 border-indigo-500 transform rotate-45" />
+      </div>
+
+      <div className="w-full max-w-md relative z-10 flex flex-col items-center">
+        
+        {/* MAIN CARD WITH GLASSMORPHISM & NEON BORDER */}
+        <div className="w-full bg-[#0b0e26]/80 backdrop-blur-xl border border-indigo-500/30 rounded-3xl shadow-[0_0_50px_rgba(79,70,229,0.15)] overflow-hidden">
+          
+          {/* Card Body */}
+          <div className="p-8 sm:p-10 space-y-6">
+            
+            {/* Logo Icon Header */}
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="relative">
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 blur opacity-75 animate-pulse" />
+                <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center border border-indigo-400/40 shadow-inner">
+                  <ShoppingCart className="w-8 h-8 text-white stroke-[2.2]" />
+                </div>
+              </div>
+
+              <div>
+                <h1 className="text-2xl font-black tracking-wider text-white uppercase">
+                  POS GROSIR SYSTEM
+                </h1>
+                <p className="text-xs text-slate-400 mt-1 font-medium">
+                  Sistem Kasir & Manajemen Toko Grosir Modern
+                </p>
+              </div>
+            </div>
+
+            {/* Alert Error */}
+            {errorMsg && (
+              <div className="p-3.5 bg-red-950/50 border border-red-500/50 text-red-300 rounded-xl text-xs font-semibold text-center flex items-center justify-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            {/* Login Form */}
+            <form onSubmit={handleLogin} className="space-y-4">
+              
+              {/* Field Email */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                  EMAIL KASIR / ADMIN
+                </label>
+                <div className="relative flex items-center">
+                  <User className="w-4 h-4 text-indigo-400 absolute left-3.5 pointer-events-none" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="kasir@tokogrosir.com"
+                    className="w-full bg-[#111638]/70 border border-indigo-500/20 focus:border-indigo-500 text-slate-100 placeholder:text-slate-500 text-sm rounded-xl pl-10 pr-4 py-3 outline-none transition duration-200 focus:ring-2 focus:ring-indigo-500/20 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Field Password */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                  PASSWORD
+                </label>
+                <div className="relative flex items-center">
+                  <Lock className="w-4 h-4 text-indigo-400 absolute left-3.5 pointer-events-none" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-[#111638]/70 border border-indigo-500/20 focus:border-indigo-500 text-slate-100 placeholder:text-slate-500 text-sm rounded-xl pl-10 pr-10 py-3 outline-none transition duration-200 focus:ring-2 focus:ring-indigo-500/20 font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 text-slate-400 hover:text-slate-200 transition"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-2 py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 transition duration-300 flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <span>{loading ? 'Verifikasi Akun...' : 'Masuk ke Aplikasi'}</span>
+                {!loading && <span>🚀</span>}
+              </button>
+            </form>
+
+            {/* Divider ATAU */}
+            <div className="relative flex items-center justify-center pt-1">
+              <div className="border-t border-slate-800 w-full" />
+              <span className="bg-[#0b0e26] px-3 text-[10px] text-slate-500 font-semibold tracking-wider uppercase absolute">
+                ATAU
+              </span>
+            </div>
+
+            {/* Link Daftar */}
+            <div className="text-center text-xs text-slate-400">
+              Belum memiliki akun toko?{' '}
+              <Link 
+                href="/register" 
+                className="text-blue-400 font-semibold hover:text-blue-300 hover:underline inline-flex items-center gap-0.5 transition"
+              >
+                Daftar Toko Baru &rsaquo;
+              </Link>
+            </div>
           </div>
-          <h1 className="text-2xl font-black text-slate-800">POS GROSIR SYSTEM</h1>
-          <p className="text-xs font-semibold text-slate-400 mt-1">
-            Masuk dengan akun kasir / admin toko Anda
-          </p>
+
+          {/* Footer Card Features */}
+          <div className="bg-[#080a1e]/90 border-t border-indigo-500/10 px-6 py-4 grid grid-cols-3 gap-2 text-center text-[10px]">
+            <div className="flex flex-col items-center gap-1">
+              <ShieldCheck className="w-4 h-4 text-indigo-400" />
+              <span className="font-bold text-slate-300">Aman & Terpercaya</span>
+              <span className="text-slate-500 scale-90">Data Anda terlindungi</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <Zap className="w-4 h-4 text-indigo-400" />
+              <span className="font-bold text-slate-300">Performa Cepat</span>
+              <span className="text-slate-500 scale-90">Transaksi tanpa hambatan</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <Headphones className="w-4 h-4 text-indigo-400" />
+              <span className="font-bold text-slate-300">Support 24/7</span>
+              <span className="text-slate-500 scale-90">Kami siap membantu</span>
+            </div>
+          </div>
         </div>
 
-        {/* Alert Error */}
-        {errorMsg && (
-          <div className="mb-6 p-3.5 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-semibold text-center">
-            ⚠️ {errorMsg}
-          </div>
-        )}
-
-        {/* Form Login */}
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-              Email Kasir / Admin
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="kasir@tokogrosir.com"
-              className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 bg-slate-50 focus:bg-white focus:outline-blue-600 font-medium text-sm transition"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 bg-slate-50 focus:bg-white focus:outline-blue-600 font-medium text-sm transition"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/30 transition disabled:bg-slate-300 mt-2 cursor-pointer"
-          >
-            {loading ? 'Verifikasi Akun...' : 'Masuk ke Aplikasi 🚀'}
-          </button>
-        </form>
-
-        {/* Link ke Halaman Registrasi */}
-        <div className="text-center mt-6 text-sm text-slate-600">
-          Belum memiliki akun toko?{' '}
-          <Link 
-            href="/register" 
-            className="text-blue-600 hover:text-blue-800 font-semibold underline underline-offset-2 transition"
-          >
-            Daftar Toko Baru
-          </Link>
+        {/* Footer Text Bawah */}
+        <div className="mt-6 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 font-medium">
+          <span>Sistem Kasir Grosir Multi-Unit v1.0</span>
+          <span>•</span>
+          <span className="text-slate-400 flex items-center gap-1">
+            Supabase Auth <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 inline" />
+          </span>
         </div>
 
-        <div className="mt-8 text-center border-t pt-4">
-          <p className="text-[11px] text-slate-400">
-            Sistem Kasir Grosir Multi-Unit v1.0 • Supabase Auth
-          </p>
-        </div>
       </div>
     </div>
   )
