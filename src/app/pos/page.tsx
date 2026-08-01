@@ -1,13 +1,13 @@
 "use client";
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, ShoppingCart, Trash2, X, Plus, Wallet, 
   CreditCard, Clock, User, Calendar, Building2, 
   QrCode, FileText, CheckCircle2, Printer 
 } from 'lucide-react';
-import { createClient } from '@/lib/supabaseClient'; // Sesuaikan path supabase client Anda
+import { createClient } from '@/lib/supabaseClient';
+
 const supabase = createClient();
 
 // ================= TYPES =================
@@ -277,7 +277,7 @@ export default function PosComponent() {
       const invoiceNum = 'INV-' + Date.now();
       const customerObj = customers.find(c => c.id === selectedCustomerId);
 
-      // Simpan Transaksi Penjualan ke Supabase
+      // 1. Simpan Transaksi Penjualan ke Supabase (sales)
       const { data: saleData, error: saleErr } = await supabase
         .from('sales')
         .insert([
@@ -298,27 +298,31 @@ export default function PosComponent() {
 
       if (saleErr) throw saleErr;
 
-      console.log('Struktur item keranjang:', cart[0]);
-      const itemsToInsert = cart.map((item: any) => ({
-        sale_id: saleData.id,
-        product_id: item.id || item.product_id,
-  
-      // Ambil quantity, jika tidak ada cari 'qty', jika masih tidak ada beri nilai default 1
-        quantity: item.quantity ?? item.qty ?? 1, 
-  
-        price: item.price ?? item.unit_price ?? 0,
-        buy_price: item.buy_price ?? item.buyPrice ?? item.cost_price ?? 0,
-  
-      // Ambil unit ID (sesuaikan jika ada nama lain seperti selectedUnitId)
-        product_unit_id: item.product_unit_id ?? item.unit_id ?? item.selectedUnitId ?? null, 
-      }));
+      // 2. Mapping items ke format sale_items yang akurat
+      const itemsToInsert = cart.map((item: CartItem) => {
+        const quantity = item.qty;
+        const pricePerUnit = item.selectedUnit.price;
+        const subtotal = quantity * pricePerUnit;
 
+        return {
+          sale_id: saleData.id,
+          product_id: item.product.id,
+          product_unit_id: item.selectedUnit.id,
+          quantity: quantity,
+          price_per_unit: pricePerUnit,
+          buy_price: 0,
+          subtotal: subtotal,
+        };
+      });
+
+      // 3. Simpan Detail Item Penjualan ke Supabase (sale_items)
       const { error: itemsErr } = await supabase
         .from('sale_items')
         .insert(itemsToInsert);
 
       if (itemsErr) throw itemsErr;
-      // Sukses
+
+      // 4. Sukses - Tampilkan Modal Sukses
       setCompletedSale({
         invoiceNumber: invoiceNum,
         total: grandTotal,
@@ -338,7 +342,7 @@ export default function PosComponent() {
       setSelectedCustomerId('');
       setDueDate('');
       setSearch('');
-      fetchInitialData(); // Refresh Data Stok & Utang
+      fetchInitialData();
     } catch (err: any) {
       alert('Transaksi Gagal: ' + err.message);
     } finally {
@@ -827,59 +831,106 @@ export default function PosComponent() {
 
       </div>
 
+      {/* ================= ATURAN PRINT KHUSUS (CSS OVERRIDE) ================= */}
+      <style jsx global>{`
+        @media print {
+          /* Sembunyikan SELURUH elemen aplikasi kasir saat print */
+          body * {
+            visibility: hidden !important;
+          }
+          
+          /* Hanya tampilkan area struk cetak */
+          #thermal-receipt, #thermal-receipt * {
+            visibility: visible !important;
+          }
+
+          /* Atur posisi struk ke pojok kiri atas kertas */
+          #thermal-receipt {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 58mm !important;
+            margin: 0 !important;
+            padding: 4px !important;
+            background: #fff !important;
+            color: #000 !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            font-size: 9pt !important;
+            line-height: 1.2 !important;
+          }
+
+          /* Hilangkan header/footer bawaan browser (seperti tanggal/URL di kertas) */
+          @page {
+            margin: 0;
+            size: auto;
+          }
+        }
+      `}</style>
+
       {/* ================= ELEMEN PRINT STRUK (THERMAL RECEIPT) ================= */}
       {completedSale && (
-        <div id="thermal-receipt" className="hidden print:block text-black bg-white p-1 text-xs font-mono">
-          <div className="text-center font-bold uppercase mb-1">
-            <p className="text-sm">{storeSettings?.store_name || 'TOKO GROSIR'}</p>
-            <p className="font-normal text-[10px]">{storeSettings?.address || ''}</p>
-            <p className="font-normal text-[10px]">{storeSettings?.phone || ''}</p>
+        <div id="thermal-receipt" className="hidden print:block">
+          <div style={{ textAlign: 'center', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <div style={{ fontSize: '11pt' }}>{storeSettings?.store_name || 'TOKO GROSIR'}</div>
+            <div style={{ fontSize: '8pt', fontWeight: 'normal' }}>{storeSettings?.address || 'Jl. Raya Utama No. 123'}</div>
+            <div style={{ fontSize: '8pt', fontWeight: 'normal' }}>{storeSettings?.phone || '0812-3456-7890'}</div>
           </div>
-          <p className="text-center">--------------------------------</p>
-          <div className="text-[10px] my-1">
-            <p>No   : {completedSale.invoiceNumber}</p>
-            <p>Tgl  : {completedSale.date}</p>
-            {completedSale.customerName && <p>Pel  : {completedSale.customerName}</p>}
-            <p>Bayar: {completedSale.paymentMethod.toUpperCase()}</p>
+
+          <div style={{ borderBottom: '1px dashed #000', margin: '4px 0' }}></div>
+
+          <div style={{ fontSize: '8pt', marginBottom: '4px' }}>
+            <div>No   : {completedSale.invoiceNumber}</div>
+            <div>Tgl  : {completedSale.date}</div>
+            {completedSale.customerName && <div>Pel  : {completedSale.customerName}</div>}
+            <div>Bayar: {completedSale.paymentMethod.toUpperCase()}</div>
           </div>
-          <p className="text-center">--------------------------------</p>
-          <div className="space-y-1 my-1">
+
+          <div style={{ borderBottom: '1px dashed #000', margin: '4px 0' }}></div>
+
+          <div style={{ fontSize: '8pt' }}>
             {completedSale.items.map((item, idx) => (
-              <div key={idx}>
-                <p className="font-bold">{item.product.name}</p>
-                <div className="flex justify-between text-[10px]">
+              <div key={idx} style={{ marginBottom: '4px' }}>
+                <div style={{ fontWeight: 'bold' }}>{item.product.name}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>{item.qty} {item.selectedUnit.unit_name} x {item.selectedUnit.price.toLocaleString('id-ID')}</span>
                   <span>{item.subtotal.toLocaleString('id-ID')}</span>
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-center">--------------------------------</p>
-          <div className="space-y-0.5 text-right font-bold text-[11px]">
-            <div className="flex justify-between">
+
+          <div style={{ borderBottom: '1px dashed #000', margin: '4px 0' }}></div>
+
+          <div style={{ fontSize: '9pt', fontWeight: 'bold' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>TOTAL:</span>
               <span>Rp {completedSale.total.toLocaleString('id-ID')}</span>
             </div>
             {completedSale.paymentMethod !== 'kasbon' ? (
               <>
-                <div className="flex justify-between font-normal text-[10px]">
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'normal', fontSize: '8pt' }}>
                   <span>BAYAR:</span>
                   <span>Rp {completedSale.paid.toLocaleString('id-ID')}</span>
                 </div>
-                <div className="flex justify-between font-normal text-[10px]">
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'normal', fontSize: '8pt' }}>
                   <span>KEMBALI:</span>
                   <span>Rp {completedSale.change.toLocaleString('id-ID')}</span>
                 </div>
               </>
             ) : (
-              <div className="flex justify-between text-amber-800 font-normal text-[10px]">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'normal', fontSize: '8pt' }}>
                 <span>TEMPO:</span>
                 <span>{completedSale.dueDate || '-'}</span>
               </div>
             )}
           </div>
-          <p className="text-center mt-2">--------------------------------</p>
-          <p className="text-center text-[10px] italic">*** Terima Kasih ***</p>
+
+          <div style={{ borderBottom: '1px dashed #000', margin: '6px 0' }}></div>
+
+          <div style={{ textAlign: 'center', fontSize: '8pt', fontStyle: 'italic' }}>
+            *** Terima Kasih ***<br/>
+            Barang yang sudah dibeli tidak dapat ditukar/dikembalikan
+          </div>
         </div>
       )}
     </>
