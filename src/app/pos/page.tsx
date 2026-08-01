@@ -297,7 +297,21 @@ export default function PosComponent() {
         .single();
 
       if (saleErr) throw saleErr;
+const itemsToInsert = cart.map((item: any) => ({
+        sale_id: saleData.id,
+        product_id: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        buy_price: item.buy_price || item.cost_price || 0,
+        // Sesuaikan nama field di bawah dengan property di objek item cart kamu:
+        product_unit_id: item.unit_id || item.product_unit_id || null, 
+      }));
 
+      const { error: itemsErr } = await supabase
+        .from('sale_items')
+        .insert(itemsToInsert);
+
+      if (itemsErr) throw itemsErr;
       // Sukses
       setCompletedSale({
         invoiceNumber: invoiceNum,
