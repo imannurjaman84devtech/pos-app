@@ -297,14 +297,20 @@ export default function PosComponent() {
         .single();
 
       if (saleErr) throw saleErr;
-const itemsToInsert = cart.map((item: any) => ({
+
+      console.log('Struktur item keranjang:', cart[0]);
+      const itemsToInsert = cart.map((item: any) => ({
         sale_id: saleData.id,
-        product_id: item.id,
-        quantity: item.quantity,
-        price: item.price,
-        buy_price: item.buy_price || item.cost_price || 0,
-        // Sesuaikan nama field di bawah dengan property di objek item cart kamu:
-        product_unit_id: item.unit_id || item.product_unit_id || null, 
+        product_id: item.id || item.product_id,
+  
+      // Ambil quantity, jika tidak ada cari 'qty', jika masih tidak ada beri nilai default 1
+        quantity: item.quantity ?? item.qty ?? 1, 
+  
+        price: item.price ?? item.unit_price ?? 0,
+        buy_price: item.buy_price ?? item.buyPrice ?? item.cost_price ?? 0,
+  
+      // Ambil unit ID (sesuaikan jika ada nama lain seperti selectedUnitId)
+        product_unit_id: item.product_unit_id ?? item.unit_id ?? item.selectedUnitId ?? null, 
       }));
 
       const { error: itemsErr } = await supabase
