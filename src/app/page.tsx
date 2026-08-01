@@ -81,7 +81,7 @@ export default function HomePage() {
             {/* Box Logo */}
             <div className="relative w-36 h-36 rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl bg-[#080a1d] flex items-center justify-center">
               <Image
-                src="/logo GG.png"
+                src="/logo-gg.png"
                 alt="POS Grosir System Logo"
                 width={144}
                 height={144}

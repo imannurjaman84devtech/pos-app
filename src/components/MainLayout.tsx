@@ -9,8 +9,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // 1. Sembunyikan Sidebar jika di halaman landing, login, atau register
+  // 1. Sembunyikan Sidebar jika di halaman root (/), landing, login, atau register
   const isHideSidebar = 
+    pathname === '/' || 
     pathname === '/landing' || 
     pathname === '/login' || 
     pathname === '/register'
