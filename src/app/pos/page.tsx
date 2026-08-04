@@ -6,6 +6,7 @@ import {
   CreditCard, Clock, User, Calendar, Building2, 
   QrCode, FileText, CheckCircle2, Printer 
 } from 'lucide-react';
+import { Camera } from "lucide-react";
 import { createClient } from '@/lib/supabaseClient';
 
 const supabase = createClient();
@@ -141,6 +142,8 @@ export default function PosComponent() {
     setTimeout(() => {
       barcodeInputRef.current?.focus();
     }, 100);
+
+  const [scannerOpen, setScannerOpen] = useState(false);
   };
 
   // ================= CART HANDLERS =================
@@ -866,6 +869,7 @@ export default function PosComponent() {
           }
         }
       `}</style>
+      
 
       {/* ================= ELEMEN PRINT STRUK (THERMAL RECEIPT) ================= */}
       {completedSale && (
