@@ -35,7 +35,9 @@ export default function OwnerAdminPanel() {
   const [storeAddress, setStoreAddress] = useState('')
   const [ownerEmail, setOwnerEmail] = useState('')
   const [ownerPassword, setOwnerPassword] = useState('12345678') // Default password sementara
-  const [packageType, setPackageType] = useState('Pro Gold')
+  
+  // FIXED: Default disesuaikan dengan Paket A (Beli Putus)
+  const [packageType, setPackageType] = useState('Paket A (Beli Putus)')
   const [activeMonths, setActiveMonths] = useState(12)
 
   // Fetch daftar toko dari Supabase
@@ -281,14 +283,14 @@ export default function OwnerAdminPanel() {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-slate-400 font-semibold mb-1 block">PAKET LISENSI</label>
+                  {/* FIXED: Mengubah opsi dropdown menjadi Paket A & Paket B */}
                   <select
                     value={packageType}
                     onChange={(e) => setPackageType(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-cyan-500 transition"
                   >
-                    <option value="Basic">Basic</option>
-                    <option value="Pro Gold">Pro Gold</option>
-                    <option value="Enterprise">Enterprise</option>
+                    <option value="Paket A (Beli Putus)">Paket A (Beli Putus)</option>
+                    <option value="Paket B (Sewa System)">Paket B (Sewa System)</option>
                   </select>
                 </div>
 
@@ -381,7 +383,7 @@ export default function OwnerAdminPanel() {
                         </p>
                       </div>
 
-                      {/* AKSbrowser KENDALI */}
+                      {/* AKSES KENDALI */}
                       <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
                         <button
                           onClick={() => addLicenseDuration(store.id, store.expired_at, 1)}
