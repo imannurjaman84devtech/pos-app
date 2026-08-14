@@ -27,6 +27,7 @@ export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  // HANDLER LOGIN DENGAN AUTO-ROUTING IMANDEVTECH
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -41,8 +42,14 @@ export default function LoginPage() {
       setErrorMsg('Email atau password salah! Silakan coba lagi.')
       setLoading(false)
     } else if (data.session) {
-      // Login Berhasil -> Arahkan ke Halaman Utama / Dashboard
-      router.push('/')
+      // 🚀 AUTO-ROUTING RAHASIA FOUNDER VS KASIR
+      if (data.user?.email === 'imannurjamanreborn@gmail.com') {
+        // Jika Email Founder IMANDEVTECH -> Langsung Roket ke Control Panel Owner!
+        router.push('/imandev-admin')
+      } else {
+        // Jika Email Klien / Kasir Biasa -> Masuk ke Kasir POS Utama
+        router.push('/')
+      }
       router.refresh()
     }
   }
