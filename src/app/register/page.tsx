@@ -70,8 +70,8 @@ export default function RegisterPage() {
         throw new Error('Gagal membuat sesi login: ' + signInError.message)
       }
 
-      // 3. Simpan Profil Identitas Toko ke Table store_settings
       if (authData.user) {
+        // 3. Simpan Profil Identitas Toko ke Table store_settings
         const { error: dbError } = await supabase.from('store_settings').upsert({
           id: 1,
           store_name: formData.storeName,
@@ -86,7 +86,25 @@ export default function RegisterPage() {
           throw new Error('Gagal menyimpan profil toko: ' + dbError.message)
         }
 
-        // 4. Berhasil! Arahkan ke Dashboard
+        // 4. OTOMATIS DAFTARKAN LISENSI SAAS KE client_stores (Bisa dibaca Owner Admin Panel)
+        const expiredDate = new Date()
+        expiredDate.setDate(expiredDate.getDate() + 30) // Default Trial 30 Hari
+
+        await supabase.from('client_stores').upsert([
+          {
+            owner_name: formData.ownerName,
+            store_name: formData.storeName,
+            owner_phone: formData.phone,
+            bank_account: formData.bankAccount,
+            store_address: formData.address,
+            owner_email: formData.email,
+            package_type: 'Pro Gold',
+            is_active: true,
+            expired_at: expiredDate.toISOString(),
+          }
+        ], { onConflict: 'owner_email' })
+
+        // 5. Berhasil! Arahkan ke Dashboard
         router.push('/')
         router.refresh()
       }
