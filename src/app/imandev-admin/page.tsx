@@ -1,28 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabaseClient'
-import { 
-  ShieldAlert, 
-  Store, 
-  Plus, 
-  CheckCircle2, 
-  XCircle, 
-  Calendar, 
-  Phone, 
-  Mail, 
-  Lock, 
-  Unlock,
-  RefreshCw,
-  LogOut,
-  Sparkles,
-  User,
-  CreditCard,
-  MapPin
-} from 'lucide-react'
+import { createClient } from '@supabase/supabase-js'
 
-interface ClientStore {
+// Inisialisasi Supabase Client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+interface Store {
   id: string
   owner_name: string
   store_name: string
@@ -37,42 +23,22 @@ interface ClientStore {
 }
 
 export default function OwnerAdminPanel() {
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null)
-  const [stores, setStores] = useState<ClientStore[]>([])
+  const [stores, setStores] = useState<Store[]>([])
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
 
-  // Form State Tambah Manual
+  // Form State
   const [ownerName, setOwnerName] = useState('')
   const [storeName, setStoreName] = useState('')
   const [ownerPhone, setOwnerPhone] = useState('')
   const [bankAccount, setBankAccount] = useState('')
   const [storeAddress, setStoreAddress] = useState('')
   const [ownerEmail, setOwnerEmail] = useState('')
+  const [ownerPassword, setOwnerPassword] = useState('12345678') // Default password sementara
   const [packageType, setPackageType] = useState('Pro Gold')
   const [activeMonths, setActiveMonths] = useState(12)
 
-  const router = useRouter()
-  const supabase = createClient()
-
-  useEffect(() => {
-    checkOwnerAccess()
-  }, [])
-
-  const checkOwnerAccess = async () => {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user || user.email !== 'imannurjamanreborn@gmail.com') {
-      setIsAuthorized(false)
-      setLoading(false)
-      return
-    }
-
-    setIsAuthorized(true)
-    fetchStores()
-  }
-
+  // Fetch daftar toko dari Supabase
   const fetchStores = async () => {
     setLoading(true)
     const { data, error } = await supabase
@@ -80,208 +46,245 @@ export default function OwnerAdminPanel() {
       .select('*')
       .order('created_at', { ascending: false })
 
-    if (!error && data) {
-      setStores(data)
+    if (error) {
+      console.error('Error fetching stores:', error.message)
+    } else {
+      setStores(data || [])
     }
     setLoading(false)
   }
 
+  useEffect(() => {
+    fetchStores()
+  }, [])
+
+  // Tambah Toko Baru + Buat Akun Auth
   const handleAddStore = async (e: React.FormEvent) => {
     e.preventDefault()
     setActionLoading(true)
 
-    const expDate = new Date()
-    expDate.setMonth(expDate.getMonth() + Number(activeMonths))
+    try {
+      // 1. Buat Akun Auth Login untuk Pemilik Toko
+      const { error: authError } = await supabase.auth.signUp({
+        email: ownerEmail,
+        password: ownerPassword,
+      })
 
-    const { error } = await supabase.from('client_stores').insert([
-      {
-        owner_name: ownerName,
-        store_name: storeName,
-        owner_phone: ownerPhone,
-        bank_account: bankAccount,
-        store_address: storeAddress,
-        owner_email: ownerEmail,
-        package_type: packageType,
-        is_active: true,
-        expired_at: expDate.toISOString(),
+      // Jika error bukan karena email sudah terdaftar, lempar error
+      if (authError && !authError.message.toLowerCase().includes('already registered')) {
+        throw new Error('Gagal buat akun Auth: ' + authError.message)
       }
-    ])
 
-    if (error) {
-      alert('Gagal menambah toko: ' + error.message)
-    } else {
-      alert('Berhasil! Toko ' + storeName + ' resmi terdaftar.')
+      // 2. Hitung tanggal kedaluwarsa
+      const expDate = new Date()
+      expDate.setMonth(expDate.getMonth() + Number(activeMonths))
+
+      // 3. Simpan data lisensi toko ke database client_stores
+      const { error: dbError } = await supabase.from('client_stores').insert([
+        {
+          owner_name: ownerName,
+          store_name: storeName,
+          owner_phone: ownerPhone,
+          bank_account: bankAccount,
+          store_address: storeAddress,
+          owner_email: ownerEmail,
+          package_type: packageType,
+          is_active: true,
+          expired_at: expDate.toISOString(),
+        },
+      ])
+
+      if (dbError) throw dbError
+
+      alert(`✅ Berhasil! Toko "${storeName}" berhasil diaktifkan.\n\nDetail Akun Login Klien:\nEmail: ${ownerEmail}\nPassword: ${ownerPassword}`)
+
+      // Reset Form
       setOwnerName('')
       setStoreName('')
       setOwnerPhone('')
       setBankAccount('')
       setStoreAddress('')
       setOwnerEmail('')
+      setOwnerPassword('12345678')
       fetchStores()
+    } catch (err: any) {
+      alert('⚠️ Gagal menambahkan toko: ' + err.message)
+    } finally {
+      setActionLoading(false)
     }
-    setActionLoading(false)
   }
 
+  // Toggle Status Aktif / Blokir Lisensi
   const toggleStoreStatus = async (id: string, currentStatus: boolean) => {
+    const actionText = currentStatus ? 'memblokir/mengunci' : 'mengaktifkan kembali'
+    if (!confirm(`Apakah Anda yakin ingin ${actionText} toko ini?`)) return
+
     const { error } = await supabase
       .from('client_stores')
       .update({ is_active: !currentStatus })
       .eq('id', id)
 
-    if (!error) {
-      fetchStores()
-    } else {
+    if (error) {
       alert('Gagal mengubah status toko: ' + error.message)
+    } else {
+      fetchStores()
     }
   }
 
-  if (isAuthorized === false) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900 border border-red-500/30 rounded-3xl p-8 text-center space-y-4 shadow-2xl">
-          <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center mx-auto border border-red-500/20">
-            <ShieldAlert className="w-8 h-8" />
-          </div>
-          <h1 className="text-xl font-black text-red-400">403 - RESTRICTED AREA</h1>
-          <p className="text-xs text-slate-400">
-            Halaman ini khusus Founder IMANDEVTECH. Akses Anda ditolak.
-          </p>
-          <button
-            onClick={() => router.push('/')}
-            className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-xl transition"
-          >
-            Kembali ke Aplikasi Utama
-          </button>
-        </div>
-      </div>
-    )
+  // Tambah Masa Aktif Lisensi (Perpanjang Masa Lisensi)
+  const addLicenseDuration = async (id: string, currentExpiredAt: string, monthsToAdd: number) => {
+    const baseDate = currentExpiredAt && new Date(currentExpiredAt) > new Date()
+      ? new Date(currentExpiredAt)
+      : new Date()
+
+    baseDate.setMonth(baseDate.getMonth() + monthsToAdd)
+
+    const { error } = await supabase
+      .from('client_stores')
+      .update({
+        expired_at: baseDate.toISOString(),
+        is_active: true,
+      })
+      .eq('id', id)
+
+    if (error) {
+      alert('Gagal memperpanjang lisensi: ' + error.message)
+    } else {
+      alert(`Berhasil memperpanjang lisensi +${monthsToAdd} bulan!`)
+      fetchStores()
+    }
   }
 
   return (
-    <div className="min-h-screen bg-[#050714] text-slate-100 p-4 sm:p-8 font-sans selection:bg-cyan-500 selection:text-black">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
+      <div className="max-w-7xl mx-auto space-y-8">
         
-        {/* HEADER PANEL */}
-        <div className="bg-slate-900/80 p-6 rounded-3xl border border-indigo-500/30 shadow-2xl backdrop-blur-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-tr from-cyan-500 to-indigo-500 rounded-2xl text-slate-950 font-black shadow-lg">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2">
-                IMANDEVTECH <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">OWNER PANEL</span>
-              </h1>
-              <p className="text-xs text-slate-400">Kontrol Lisensi SaaS & Manajemen Toko Klien</p>
-            </div>
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-6 gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+              <span className="bg-gradient-to-r from-cyan-500 to-blue-600 p-2 rounded-xl text-white text-xl">🛡️</span>
+              OWNER SAAS CONTROL PANEL
+            </h1>
+            <p className="text-slate-400 text-sm mt-1">
+              Pusat kendali lisensi toko, perpanjangan akses, dan manajemen klien
+            </p>
           </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button 
-              onClick={fetchStores}
-              className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition border border-slate-700"
-              title="Refresh Data"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-            <button 
-              onClick={() => router.push('/login')}
-              className="flex-1 sm:flex-initial px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2"
-            >
-              <LogOut className="w-4 h-4" /> Keluar
-            </button>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase">Total Klien Toko</p>
+              <p className="text-2xl font-black text-cyan-400">{stores.length}</p>
+            </div>
+            <div className="h-8 w-[1px] bg-slate-800" />
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase">Toko Aktif</p>
+              <p className="text-2xl font-black text-emerald-400">
+                {stores.filter(s => s.is_active).length}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* GRID CONTENT */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* FORM REGISTRASI TOKO MANUAL */}
-          <div className="lg:col-span-1 bg-slate-900/60 p-6 rounded-3xl border border-slate-800 space-y-4">
-            <h2 className="text-base font-extrabold flex items-center gap-2 text-white">
-              <Plus className="w-5 h-5 text-cyan-400" /> Input Toko Manual
+          {/* FORM INPUT TOKO MANUAL */}
+          <div className="lg:col-span-1 bg-slate-900/60 border border-slate-800 rounded-3xl p-6 backdrop-blur-md">
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <span className="text-cyan-400">+</span> Input Toko Manual
             </h2>
-            <form onSubmit={handleAddStore} className="space-y-3 text-xs">
-              
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-slate-400 font-semibold mb-1 block">NAMA PEMILIK *</label>
-                  <input 
-                    type="text" 
-                    required
-                    placeholder="Bpk. H. Ahmad"
-                    value={ownerName}
-                    onChange={(e) => setOwnerName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-cyan-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-slate-400 font-semibold mb-1 block">NAMA TOKO *</label>
-                  <input 
-                    type="text" 
-                    required
-                    placeholder="Grosir Barokah"
-                    value={storeName}
-                    onChange={(e) => setStoreName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-cyan-500"
-                  />
-                </div>
+
+            <form onSubmit={handleAddStore} className="space-y-4 text-xs">
+              <div>
+                <label className="text-slate-400 font-semibold mb-1 block">NAMA PEMILIK *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Bpk. H. Ahmad"
+                  value={ownerName}
+                  onChange={(e) => setOwnerName(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-cyan-500 transition"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 font-semibold mb-1 block">NAMA TOKO *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Grosir Barokah"
+                  value={storeName}
+                  onChange={(e) => setStoreName(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-cyan-500 transition"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-slate-400 font-semibold mb-1 block">NO. TELP / WA *</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     required
                     placeholder="08123456789"
                     value={ownerPhone}
                     onChange={(e) => setOwnerPhone(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-cyan-500"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-cyan-500 transition"
                   />
                 </div>
                 <div>
                   <label className="text-slate-400 font-semibold mb-1 block">REKENING / BANK</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="BCA 12345 a.n Ahmad"
                     value={bankAccount}
                     onChange={(e) => setBankAccount(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-cyan-500"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-cyan-500 transition"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="text-slate-400 font-semibold mb-1 block">ALAMAT TOKO *</label>
-                <textarea 
-                  required
+                <textarea
                   rows={2}
+                  required
                   placeholder="Jl. Raya Pasar Induk No. 88"
                   value={storeAddress}
                   onChange={(e) => setStoreAddress(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-cyan-500 resize-none"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-cyan-500 transition"
                 />
               </div>
 
               <div>
                 <label className="text-slate-400 font-semibold mb-1 block">EMAIL ADMIN *</label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   required
                   placeholder="owner@tokojaya.com"
                   value={ownerEmail}
                   onChange={(e) => setOwnerEmail(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-cyan-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-cyan-500 transition"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 font-semibold mb-1 block">PASSWORD SEMENTARA (LOGIN) *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="12345678"
+                  value={ownerPassword}
+                  onChange={(e) => setOwnerPassword(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-cyan-400 font-mono outline-none focus:border-cyan-500 transition"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-slate-400 font-semibold mb-1 block">PAKET LISENSI</label>
-                  <select 
-                    value={packageType} 
+                  <select
+                    value={packageType}
                     onChange={(e) => setPackageType(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-cyan-500 font-bold"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-cyan-500 transition"
                   >
                     <option value="Basic">Basic</option>
                     <option value="Pro Gold">Pro Gold</option>
@@ -291,15 +294,15 @@ export default function OwnerAdminPanel() {
 
                 <div>
                   <label className="text-slate-400 font-semibold mb-1 block">DURASI</label>
-                  <select 
-                    value={activeMonths} 
+                  <select
+                    value={activeMonths}
                     onChange={(e) => setActiveMonths(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-cyan-500 font-bold"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-cyan-500 transition"
                   >
                     <option value={1}>1 Bulan</option>
+                    <option value={3}>3 Bulan</option>
                     <option value={6}>6 Bulan</option>
                     <option value={12}>12 Bulan (1 Thn)</option>
-                    <option value={24}>24 Bulan (2 Thn)</option>
                   </select>
                 </div>
               </div>
@@ -307,86 +310,109 @@ export default function OwnerAdminPanel() {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-indigo-500 hover:opacity-90 text-slate-950 font-black rounded-xl transition shadow-lg mt-2 cursor-pointer disabled:opacity-50"
+                className="w-full mt-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition active:scale-[0.98] disabled:opacity-50"
               >
                 {actionLoading ? 'Memproses...' : '🚀 AKTIFKAN TOKO BARU'}
               </button>
             </form>
           </div>
 
-          {/* DAFTAR TOKO TERDAFTAR */}
+          {/* DAFTAR LISENSI TOKO CLIENT */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-extrabold flex items-center gap-2 text-white">
-                <Store className="w-5 h-5 text-indigo-400" /> Daftar Toko Aktif ({stores.length})
-              </h2>
+              <h2 className="text-lg font-bold text-white">Daftar Klien SaaS & Status Akses</h2>
+              <button
+                onClick={fetchStores}
+                className="text-xs bg-slate-900 border border-slate-800 hover:border-slate-700 px-3 py-1.5 rounded-lg text-slate-300"
+              >
+                🔄 Refresh Data
+              </button>
             </div>
 
             {loading ? (
-              <div className="p-12 text-center text-slate-500 text-xs">Memuat data toko...</div>
+              <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-8 text-center text-slate-500">
+                Memuat data toko...
+              </div>
             ) : stores.length === 0 ? (
-              <div className="p-12 text-center bg-slate-900/30 rounded-3xl border border-slate-800 text-slate-500 text-xs">
-                Belum ada toko terdaftar.
+              <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-8 text-center text-slate-500">
+                Belum ada toko yang terdaftar.
               </div>
             ) : (
               <div className="space-y-3">
-                {stores.map((st) => (
-                  <div 
-                    key={st.id} 
-                    className={`p-5 rounded-2xl border transition flex flex-col justify-between gap-3 ${
-                      st.is_active 
-                        ? 'bg-slate-900/80 border-slate-800 hover:border-slate-700' 
-                        : 'bg-red-950/20 border-red-900/40 opacity-75'
-                    }`}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
-                      <div>
+                {stores.map((store) => {
+                  const isExpired = store.expired_at && new Date(store.expired_at) < new Date()
+                  const statusActive = store.is_active && !isExpired
+
+                  return (
+                    <div
+                      key={store.id}
+                      className={`bg-slate-900/80 border rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition ${
+                        statusActive ? 'border-slate-800 hover:border-slate-700' : 'border-rose-900/50 bg-rose-950/10'
+                      }`}
+                    >
+                      <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-base text-white">{st.store_name}</span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                            {st.package_type}
+                          <h3 className="text-base font-bold text-white">{store.store_name}</h3>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            statusActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                          }`}>
+                            {statusActive ? 'AKTIF' : isExpired ? 'KEDALUWARSA' : 'DIBLOKIR'}
                           </span>
-                          {st.is_active ? (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3" /> AKTIF
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-1">
-                              <XCircle className="w-3 h-3" /> TERKUNCI
-                            </span>
-                          )}
+                          <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-mono">
+                            {store.package_type}
+                          </span>
                         </div>
-                        <span className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                          <User className="w-3.5 h-3.5 text-cyan-400" /> Pemilik: <strong className="text-slate-200">{st.owner_name || '-'}</strong>
-                        </span>
+
+                        <p className="text-xs text-slate-400">
+                          Pemilik: <span className="text-slate-200 font-medium">{store.owner_name}</span> ({store.owner_phone})
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          Email: <span className="text-slate-200 font-mono">{store.owner_email}</span>
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          Masa Aktif s/d:{' '}
+                          <span className={isExpired ? 'text-rose-400 font-bold' : 'text-slate-300'}>
+                            {store.expired_at ? new Date(store.expired_at).toLocaleDateString('id-ID', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            }) : 'Selamanya'}
+                          </span>
+                        </p>
                       </div>
 
-                      <button
-                        onClick={() => toggleStoreStatus(st.id, st.is_active)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shrink-0 self-start sm:self-center ${
-                          st.is_active 
-                            ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30' 
-                            : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        }`}
-                      >
-                        {st.is_active ? (
-                          <><Lock className="w-3.5 h-3.5" /> Kunci Toko</>
-                        ) : (
-                          <><Unlock className="w-3.5 h-3.5" /> Buka Kunci</>
-                        )}
-                      </button>
-                    </div>
+                      {/* AKSbrowser KENDALI */}
+                      <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
+                        <button
+                          onClick={() => addLicenseDuration(store.id, store.expired_at, 1)}
+                          className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg transition"
+                          title="Tambah masa aktif 1 Bulan"
+                        >
+                          +1 Bln
+                        </button>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-400 pt-1">
-                      <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-slate-500" /> {st.owner_email}</span>
-                      <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-slate-500" /> {st.owner_phone || '-'}</span>
-                      <span className="flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5 text-slate-500" /> {st.bank_account || '-'}</span>
-                      <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-slate-500" /> {st.store_address || '-'}</span>
-                      <span className="flex items-center gap-1.5 text-amber-400/90 sm:col-span-2"><Calendar className="w-3.5 h-3.5" /> Masa Aktif Hingga: {new Date(st.expired_at).toLocaleDateString('id-ID')}</span>
-                    </div>
+                        <button
+                          onClick={() => addLicenseDuration(store.id, store.expired_at, 12)}
+                          className="text-xs bg-cyan-950 hover:bg-cyan-900 border border-cyan-800/50 text-cyan-300 px-3 py-1.5 rounded-lg transition"
+                          title="Tambah masa aktif 1 Tahun"
+                        >
+                          +1 Thn
+                        </button>
 
-                  </div>
-                ))}
+                        <button
+                          onClick={() => toggleStoreStatus(store.id, store.is_active)}
+                          className={`text-xs px-3 py-1.5 rounded-lg font-medium transition ${
+                            store.is_active
+                              ? 'bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/50'
+                              : 'bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/50'
+                          }`}
+                        >
+                          {store.is_active ? '🔒 Kunci Toko' : '🔓 Buka Akses'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
