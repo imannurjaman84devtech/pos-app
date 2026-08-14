@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Search, ShoppingCart, Trash2, X, Plus, Wallet, 
-  CreditCard, Clock, User, Calendar, Building2, 
-  QrCode, FileText, CheckCircle2, Printer 
+import {
+  Search, ShoppingCart, Trash2, X, Plus, Wallet,
+  CreditCard, Clock, User, Calendar, Building2,
+  QrCode, FileText, CheckCircle2, Printer, Camera
 } from 'lucide-react';
-import { Camera } from "lucide-react";
 import { createClient } from '@/lib/supabaseClient';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 
 const supabase = createClient();
 
@@ -71,7 +71,7 @@ export default function PosComponent() {
 
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
-  
+
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer' | 'kasbon'>('cash');
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
@@ -85,8 +85,38 @@ export default function PosComponent() {
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
 
   const [completedSale, setCompletedSale] = useState<SaleSuccess | null>(null);
-
   const barcodeInputRef = useRef<HTMLInputElement>(null);
+
+  // 🟢 1. STATE KAMERA SCANNER
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+
+  // 🟢 2. EFFECT UNTUK MENJALANKAN KAMERA SCANNER
+  useEffect(() => {
+    if (isCameraOpen) {
+      const scanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: { width: 250, height: 150 } },
+        false
+      );
+
+      scanner.render(
+        (decodedText) => {
+          // Begitu terdeteksi, isi input pencarian dengan kode barcode
+          setSearch(decodedText);
+          setIsCameraOpen(false); // Tutup kamera otomatis
+          scanner.clear();
+        },
+        (error) => {
+          // Mengabaikan frame saat mencari barcode
+        }
+      );
+
+      return () => {
+        scanner.clear().catch(err => console.error("Gagal stop scanner", err));
+      };
+    }
+  }, [isCameraOpen]);
+
 
   // ================= FETCH DATA =================
   useEffect(() => {
@@ -142,8 +172,6 @@ export default function PosComponent() {
     setTimeout(() => {
       barcodeInputRef.current?.focus();
     }, 100);
-
-  const [scannerOpen, setScannerOpen] = useState(false);
   };
 
   // ================= CART HANDLERS =================
@@ -356,7 +384,7 @@ export default function PosComponent() {
   return (
     <>
       <div className="flex flex-col lg:flex-row h-screen w-full bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/40 text-slate-100 font-sans overflow-hidden">
-        
+
         {/* ================= SEKSI KIRI: KATALOG & BARCODE ================= */}
         <div className="w-full lg:w-7/12 p-4 sm:p-6 flex flex-col justify-between h-auto lg:h-full overflow-hidden">
           <div>
@@ -376,24 +404,62 @@ export default function PosComponent() {
               </div>
             </div>
 
-            {/* Barcode Search Bar */}
-            <div className="relative mb-4 sm:mb-5 group">
-              <Search className="w-4 h-4 sm:w-5 sm:h-5 absolute left-4 top-3.5 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
-              <input
-                ref={barcodeInputRef}
-                id="barcode-input"
-                type="text"
-                placeholder="Cari Nama Produk / Scan Barcode... (Tekan Enter)"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyDown={handleSearchKeyDown}
-                className="w-full bg-slate-900/80 border border-slate-800 rounded-2xl pl-11 pr-12 py-3 text-xs sm:text-sm font-medium text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/80 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-300 shadow-inner"
-                autoFocus
-              />
-              <kbd className="hidden sm:inline-flex absolute right-3.5 top-3 items-center gap-1 px-2 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-800 border border-slate-700 rounded-md shadow-sm">
-                ↵ Enter
-              </kbd>
+            {/* Barcode Search Bar + Tombol Kamera */}
+            <div className="relative mb-4 sm:mb-5 group flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 sm:w-5 sm:h-5 absolute left-4 top-3.5 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
+                <input
+                  ref={barcodeInputRef}
+                  id="barcode-input"
+                  type="text"
+                  placeholder="Cari Nama / Scan Barcode... (Enter)"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
+                  className="w-full bg-slate-900/80 border border-slate-800 rounded-2xl pl-11 pr-12 py-3 text-xs sm:text-sm font-medium text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/80 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-300 shadow-inner"
+                  autoFocus
+                />
+                <kbd className="hidden sm:inline-flex absolute right-3.5 top-3 items-center gap-1 px-2 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-800 border border-slate-700 rounded-md shadow-sm">
+                  ↵ Enter
+                </kbd>
+              </div>
+
+              {/* Tombol Kamera Scan Barcode */}
+              <button
+                type="button"
+                onClick={() => setIsCameraOpen(true)}
+                className="p-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl flex items-center justify-center transition-all shadow-lg shadow-indigo-600/30 active:scale-95 shrink-0 cursor-pointer"
+                title="Scan Barcode Pakai Kamera"
+              >
+                <Camera className="w-5 h-5" />
+              </button>
             </div>
+
+            {/* Modal Pop-up Kamera Scanner */}
+            {isCameraOpen && (
+              <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4">
+                <div className="bg-slate-900 border border-indigo-500/30 w-full max-w-sm rounded-3xl p-5 relative shadow-2xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Camera className="w-4 h-4 text-indigo-400" /> Arahkan Barcode ke Kamera
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setIsCameraOpen(false)}
+                      className="p-1.5 text-slate-400 hover:text-white bg-slate-800 rounded-xl"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div id="reader" className="overflow-hidden rounded-2xl border border-slate-800 bg-black" />
+
+                  <p className="text-[11px] text-slate-400 text-center mt-3">
+                    Pastikan kode barcode terlihat jelas di area kamera.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Grid Katalog Produk */}
@@ -401,7 +467,7 @@ export default function PosComponent() {
             {filteredProducts.map(p => {
               const mainUnit = p.product_units?.[0];
               const isLowStock = p.stock_in_base_unit <= 5;
-              
+
               return (
                 <div
                   key={p.id}
@@ -416,11 +482,10 @@ export default function PosComponent() {
                   </div>
 
                   <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex justify-between items-end">
-                    <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                      isLowStock 
-                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' 
-                        : 'bg-slate-800 text-slate-300 border-slate-700'
-                    }`}>
+                    <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full border ${isLowStock
+                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                      : 'bg-slate-800 text-slate-300 border-slate-700'
+                      }`}>
                       Stok: {p.stock_in_base_unit}
                     </span>
                     <div className="text-right">
@@ -445,7 +510,7 @@ export default function PosComponent() {
                 <ShoppingCart className="w-4 h-4 text-indigo-400" /> Rincian Keranjang
               </h2>
               {cart.length > 0 && (
-                <button 
+                <button
                   onClick={() => setCart([])}
                   className="text-xs text-rose-400 hover:text-rose-300 font-medium flex items-center gap-1 hover:underline transition"
                 >
@@ -531,7 +596,7 @@ export default function PosComponent() {
             {/* Display Grand Total */}
             <div className="bg-gradient-to-r from-slate-900 to-indigo-950/60 p-3.5 rounded-2xl border border-slate-800/80 flex justify-between items-center shadow-lg">
               <span className="text-xs font-semibold text-slate-400">Total Transaksi</span>
-              <span 
+              <span
                 onClick={handlePayExact}
                 title="Klik untuk atur Uang Pas"
                 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-300 font-mono cursor-pointer hover:underline"
@@ -545,33 +610,30 @@ export default function PosComponent() {
               <button
                 type="button"
                 onClick={() => setPaymentMethod('cash')}
-                className={`py-2.5 px-2 rounded-xl border text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${
-                  paymentMethod === 'cash'
-                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 border-indigo-400/50 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-500/20'
-                    : 'bg-slate-800/60 border-slate-700/80 text-slate-400 hover:text-white'
-                }`}
+                className={`py-2.5 px-2 rounded-xl border text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${paymentMethod === 'cash'
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 border-indigo-400/50 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-500/20'
+                  : 'bg-slate-800/60 border-slate-700/80 text-slate-400 hover:text-white'
+                  }`}
               >
                 <Wallet className="w-3.5 h-3.5" /> Tunai
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMethod('transfer')}
-                className={`py-2.5 px-2 rounded-xl border text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${
-                  paymentMethod === 'transfer'
-                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 border-indigo-400/50 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-500/20'
-                    : 'bg-slate-800/60 border-slate-700/80 text-slate-400 hover:text-white'
-                }`}
+                className={`py-2.5 px-2 rounded-xl border text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${paymentMethod === 'transfer'
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 border-indigo-400/50 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-500/20'
+                  : 'bg-slate-800/60 border-slate-700/80 text-slate-400 hover:text-white'
+                  }`}
               >
                 <CreditCard className="w-3.5 h-3.5" /> Transfer
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMethod('kasbon')}
-                className={`py-2.5 px-2 rounded-xl border text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${
-                  paymentMethod === 'kasbon'
-                    ? 'bg-gradient-to-r from-amber-600 to-orange-600 border-amber-400/50 text-white shadow-lg shadow-amber-600/30 ring-2 ring-amber-500/20'
-                    : 'bg-slate-800/60 border-slate-700/80 text-amber-400/80 hover:text-amber-400'
-                }`}
+                className={`py-2.5 px-2 rounded-xl border text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${paymentMethod === 'kasbon'
+                  ? 'bg-gradient-to-r from-amber-600 to-orange-600 border-amber-400/50 text-white shadow-lg shadow-amber-600/30 ring-2 ring-amber-500/20'
+                  : 'bg-slate-800/60 border-slate-700/80 text-amber-400/80 hover:text-amber-400'
+                  }`}
               >
                 <Clock className="w-3.5 h-3.5" /> Kasbon
               </button>
@@ -648,9 +710,9 @@ export default function PosComponent() {
                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-800 mb-1">
                           <QrCode className="w-3.5 h-3.5 text-indigo-600" /> Scan QRIS di Bawah Ini
                         </div>
-                        <img 
-                          src={currentSelectedAccount.qris_image_url} 
-                          alt="QRIS Toko" 
+                        <img
+                          src={currentSelectedAccount.qris_image_url}
+                          alt="QRIS Toko"
                           className="w-28 h-28 sm:w-32 sm:h-32 object-contain border border-slate-200 rounded-lg"
                         />
                         <span className="text-[10px] font-semibold text-slate-600 mt-1">
@@ -680,7 +742,7 @@ export default function PosComponent() {
                     <label className="text-xs font-bold text-slate-300">
                       {paymentMethod === 'cash' ? 'Uang Dibayar (Tunai)' : 'Nominal Transfer'}
                     </label>
-                    <button 
+                    <button
                       type="button"
                       onClick={handlePayExact}
                       className="text-[10px] text-indigo-400 hover:underline font-bold"
@@ -704,7 +766,7 @@ export default function PosComponent() {
                       {paymentMethod === 'cash' ? 'Kembalian:' : 'Status Validasi:'}
                     </span>
                     <span className={`font-mono ${changeAmount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {paymentMethod === 'cash' 
+                      {paymentMethod === 'cash'
                         ? `Rp ${changeAmount.toLocaleString('id-ID')}`
                         : changeAmount >= 0 ? '✓ Nominal Sesuai' : '✕ Nominal Kurang'
                       }
@@ -718,11 +780,10 @@ export default function PosComponent() {
             <button
               onClick={handleCheckout}
               disabled={loading || cart.length === 0}
-              className={`w-full py-3.5 rounded-2xl text-xs sm:text-sm font-black tracking-wide uppercase transition duration-300 shadow-xl flex items-center justify-center gap-2 ${
-                paymentMethod === 'kasbon'
-                  ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-amber-600/20'
-                  : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-indigo-600/20'
-              } disabled:bg-slate-800 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 disabled:shadow-none`}
+              className={`w-full py-3.5 rounded-2xl text-xs sm:text-sm font-black tracking-wide uppercase transition duration-300 shadow-xl flex items-center justify-center gap-2 ${paymentMethod === 'kasbon'
+                ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-amber-600/20'
+                : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-indigo-600/20'
+                } disabled:bg-slate-800 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 disabled:shadow-none`}
             >
               {loading ? 'Memproses...' : paymentMethod === 'kasbon' ? 'Simpan Kasbon (Tempo) 🕒' : 'Selesaikan Pembayaran 💳'}
             </button>
@@ -869,7 +930,7 @@ export default function PosComponent() {
           }
         }
       `}</style>
-      
+
 
       {/* ================= ELEMEN PRINT STRUK (THERMAL RECEIPT) ================= */}
       {completedSale && (
@@ -932,7 +993,7 @@ export default function PosComponent() {
           <div style={{ borderBottom: '1px dashed #000', margin: '6px 0' }}></div>
 
           <div style={{ textAlign: 'center', fontSize: '8pt', fontStyle: 'italic' }}>
-            *** Terima Kasih ***<br/>
+            *** Terima Kasih ***<br />
             Barang yang sudah dibeli tidak dapat ditukar/dikembalikan
           </div>
         </div>

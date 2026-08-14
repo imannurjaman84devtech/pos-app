@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabaseClient'
-import { 
-  ShoppingCart, 
-  Package, 
-  Warehouse, 
-  Receipt, 
-  Users, 
-  Settings, 
+import {
+  ShoppingCart,
+  Package,
+  Warehouse,
+  Receipt,
+  Users,
+  Settings,
   Store,
   ChevronRight,
   LogOut,
@@ -48,10 +48,10 @@ export default function Sidebar() {
         const { data: { user } } = await supabase.auth.getUser()
 
         if (user) {
-          const displayName = 
-            user.user_metadata?.full_name || 
-            user.user_metadata?.name || 
-            user.email?.split('@')[0] || 
+          const displayName =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.email?.split('@')[0] ||
             'Kasir Utama'
 
           setUserName(displayName)
@@ -92,7 +92,7 @@ export default function Sidebar() {
     loadUserData()
   }, [])
 
-  // 2. Otomatis tutup sidebar di HP saat navigasi/pindah halaman
+  // 2. Otomatis tutup sidebar di HP saat rute berpindah
   useEffect(() => {
     setIsOpen(false)
   }, [pathname])
@@ -113,7 +113,7 @@ export default function Sidebar() {
       {/* ========================================================= */}
       {/* A. HEADER TOPBAR MOBILE (Hanya Tampil di Layar HP/Kecil)  */}
       {/* ========================================================= */}
-      <div className="md:hidden bg-[#080a1e]/90 backdrop-blur-xl border-b border-indigo-500/20 p-4 flex items-center justify-between sticky top-0 z-30 font-sans">
+      <div className="md:hidden bg-[#080a1e]/90 backdrop-blur-xl border-b border-indigo-500/20 p-4 flex items-center justify-between sticky top-0 z-40 font-sans">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-600/30 border border-indigo-400/30">
             G
@@ -124,7 +124,7 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Tombol Hamburger (FIXED FOR TOUCH) */}
+        {/* Tombol Hamburger tunggal */}
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
@@ -139,9 +139,9 @@ export default function Sidebar() {
       {/* B. BACKDROP / OVERLAY GELAP SAAT MENU MOBILE TERBUKA      */}
       {/* ========================================================= */}
       {isOpen && (
-        <div 
-          onClick={() => setIsOpen(false)} 
-          className="fixed inset-0 bg-[#050714]/80 backdrop-blur-md z-40 md:hidden transition-opacity touch-manipulation"
+        <div
+          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 bg-[#050714]/80 backdrop-blur-md z-45 md:hidden transition-opacity touch-manipulation"
         />
       )}
 
@@ -150,8 +150,8 @@ export default function Sidebar() {
       {/* ========================================================= */}
       <aside className={`
         fixed md:static top-0 bottom-0 left-0 z-50
-        w-64 bg-[#080a1e]/95 backdrop-blur-xl text-slate-300 min-h-screen flex flex-col justify-between border-r border-indigo-500/15 shrink-0 font-sans selection:bg-indigo-500 selection:text-white
-        transition-transform duration-300 ease-in-out shadow-[10px_0_30px_rgba(0,0,0,0.3)] md:shadow-none
+        w-64 bg-[#080a1e] md:bg-[#080a1e]/95 backdrop-blur-xl text-slate-300 h-full min-h-screen flex flex-col justify-between border-r border-indigo-500/15 shrink-0 font-sans selection:bg-indigo-500 selection:text-white
+        transition-transform duration-300 ease-in-out shadow-[10px_0_30px_rgba(0,0,0,0.5)] md:shadow-none
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div>
@@ -173,7 +173,7 @@ export default function Sidebar() {
             </div>
 
             {/* Tombol X Tutup (Mobile Only) */}
-            <button 
+            <button
               type="button"
               onClick={() => setIsOpen(false)}
               className="md:hidden text-slate-400 hover:text-white p-2 hover:bg-indigo-500/10 active:bg-indigo-500/20 rounded-lg transition touch-manipulation select-none active:scale-95"
@@ -209,11 +209,11 @@ export default function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 group relative overflow-hidden touch-manipulation select-none active:scale-98 ${
-                    isActive
+                  onClick={() => setIsOpen(false)} // LANGSUNG TUTUP SETELAH DI-KLIK
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 group relative overflow-hidden touch-manipulation select-none active:scale-98 ${isActive
                       ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/30 border border-indigo-400/30'
                       : 'text-slate-400 hover:text-slate-100 hover:bg-[#111638]/50 active:bg-[#111638] border border-transparent'
-                  }`}
+                    }`}
                 >
                   {/* Glowing Effect for Active Menu */}
                   {isActive && (
@@ -221,12 +221,11 @@ export default function Sidebar() {
                   )}
 
                   <div className="flex items-center gap-3 relative z-10">
-                    <Icon className={`w-4 h-4 transition-transform duration-300 group-hover:scale-110 ${
-                      isActive ? 'text-white' : 'text-indigo-400/70 group-hover:text-indigo-300'
-                    }`} />
+                    <Icon className={`w-4 h-4 transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-white' : 'text-indigo-400/70 group-hover:text-indigo-300'
+                      }`} />
                     <span className="tracking-wide">{item.name}</span>
                   </div>
-                  
+
                   {isActive && <ChevronRight className="w-3.5 h-3.5 stroke-[3] text-indigo-200 relative z-10" />}
                 </Link>
               )
@@ -235,7 +234,7 @@ export default function Sidebar() {
         </div>
 
         {/* Footer Profile & Logout */}
-        <div className="p-4 border-t border-indigo-500/15 bg-[#060818]/60 flex items-center justify-between gap-2">
+        <div className="p-4 border-t border-indigo-500/15 bg-[#060818]/80 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 border border-indigo-400/40 flex items-center justify-center text-white font-black text-sm shrink-0 uppercase shadow-md shadow-indigo-600/20">
               {avatarInitial}
