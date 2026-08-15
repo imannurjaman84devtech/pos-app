@@ -24,18 +24,36 @@ export default function RestockPage() {
   }, [])
 
   const fetchProducts = async () => {
-    const { data } = await supabase
-      .from('products')
-      .select('*, product_units(*)')
-      .order('name', { ascending: true })
+    try {
+      // 1. Dapatkan user yang sedang login
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-    if (data) setProducts(data as Product[])
+      // 2. Ambil store_id dari profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('store_id')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!profile?.store_id) return
+
+      // 3. Tarik data produk HANYA untuk toko yang sedang login
+      const { data } = await supabase
+        .from('products')
+        .select('*, product_units(*)')
+        .eq('store_id', profile.store_id) // Filter Multi-Tenant
+        .order('name', { ascending: true })
+
+      if (data) setProducts(data as Product[])
+    } catch (err) {
+      console.error('Gagal mengambil data produk:', err)
+    }
   }
 
   const selectedProduct = products.find(p => p.id === selectedProductId)
   const selectedUnit = selectedProduct?.product_units?.find(u => u.id === selectedUnitId)
 
-  // FIX 1: Memastikan ID unit tidak pernah 'undefined'
   const handleProductChange = (productId: string) => {
     setSelectedProductId(productId)
     setStatusMsg(null)
@@ -65,13 +83,25 @@ export default function RestockPage() {
     setLoading(true)
 
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Sesi pengguna tidak ditemukan. Silakan login kembali.')
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('store_id')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!profile?.store_id) throw new Error('Toko tidak terhubung.')
+
       const addedBaseStock = qty * selectedUnit.conversion_factor
       const newTotalStock = selectedProduct.stock_in_base_unit + addedBaseStock
 
-      // FIX 2: Menghapus .catch() dan menggantinya dengan async/await yang benar untuk Supabase
+      // Catat mutasi stok ke tabel stock_mutations
       try {
         await supabase.from('stock_mutations').insert([
           {
+            store_id: profile.store_id, // Filter Multi-Tenant
             product_id: selectedProduct.id,
             product_unit_id: selectedUnit.id,
             type: 'IN',
@@ -82,7 +112,7 @@ export default function RestockPage() {
           },
         ])
       } catch {
-        // Abaikan jika tabel stock_mutations belum dibuat
+        // Abaikan jika tabel stock_mutations belum dikonfigurasi
       }
 
       // Update total stok di tabel products
@@ -90,6 +120,7 @@ export default function RestockPage() {
         .from('products')
         .update({ stock_in_base_unit: newTotalStock })
         .eq('id', selectedProduct.id)
+        .eq('store_id', profile.store_id) // Filter Multi-Tenant Safeguard
 
       if (updateErr) throw new Error(updateErr.message)
 

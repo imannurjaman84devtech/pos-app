@@ -14,8 +14,7 @@ import {
   RefreshCw,
   Search,
   DollarSign,
-  Layers,
-  ArrowUpRight
+  Layers
 } from 'lucide-react'
 
 interface SaleReport {
@@ -58,6 +57,28 @@ export default function ReportsPage() {
     setErrorMessage(null)
 
     try {
+      // 1. Dapatkan user yang sedang login
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        setErrorMessage('Sesi pengguna tidak ditemukan. Silakan login kembali.')
+        return
+      }
+
+      // 2. Ambil store_id dari profiles
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('store_id')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!profile?.store_id) {
+        setErrorMessage('Toko belum terhubung ke akun ini.')
+        setSales([])
+        return
+      }
+
+      // 3. Tarik data sales HANYA untuk store_id milik user yang login
       const { data, error } = await supabase
         .from('sales')
         .select(`
@@ -74,6 +95,7 @@ export default function ReportsPage() {
             products ( name )
           )
         `)
+        .eq('store_id', profile.store_id) // Filter Multi-Tenant
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -305,9 +327,7 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* ========================================================= */}
-        {/* AREA LAPORAN LENGKAP (DIBERI ID: printable-report) */}
-        {/* ========================================================= */}
+        {/* AREA LAPORAN LENGKAP */}
         <div id="printable-report" className="space-y-6">
           
           {/* Metrics Summary Cards */}

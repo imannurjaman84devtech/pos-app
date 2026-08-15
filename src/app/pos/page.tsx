@@ -62,6 +62,9 @@ interface SaleSuccess {
 }
 
 export default function PosComponent() {
+  // 🟢 STATE STORE ID (MULTI-TOKO)
+  const [storeId, setStoreId] = useState<string | null>(null);
+
   // ================= STATE =================
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -90,65 +93,89 @@ export default function PosComponent() {
   // 🟢 1. STATE KAMERA SCANNER
   const [isCameraOpen, setIsCameraOpen] = useState(false);
 
-  // 🟢 2. EFFECT UNTUK MENJALANKAN KAMERA SCANNER
+  // 🟢 2. EFFECT UNTUK MENJALANKAN KAMERA SCANNER (VERSI AMAN)
   useEffect(() => {
-    if (isCameraOpen) {
-      const scanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 250, height: 150 } },
-        false
-      );
+    let scannerInstance: Html5QrcodeScanner | null = null;
 
-      scanner.render(
-        (decodedText) => {
-          // Begitu terdeteksi, isi input pencarian dengan kode barcode
-          setSearch(decodedText);
-          setIsCameraOpen(false); // Tutup kamera otomatis
-          scanner.clear();
-        },
-        (error) => {
-          // Mengabaikan frame saat mencari barcode
-        }
-      );
+    if (isCameraOpen) {
+      const timer = setTimeout(() => {
+        scannerInstance = new Html5QrcodeScanner(
+          "reader",
+          { fps: 10, qrbox: { width: 250, height: 150 } },
+          false
+        );
+
+        scannerInstance.render(
+          (decodedText) => {
+            setSearch(decodedText);
+            setIsCameraOpen(false);
+            if (scannerInstance) {
+              scannerInstance.clear().catch(err => console.error("Gagal clear scanner", err));
+            }
+          },
+          (error) => {}
+        );
+      }, 300);
 
       return () => {
-        scanner.clear().catch(err => console.error("Gagal stop scanner", err));
+        clearTimeout(timer);
+        if (scannerInstance) {
+          scannerInstance.clear().catch(err => console.error("Gagal stop scanner", err));
+        }
       };
     }
   }, [isCameraOpen]);
 
 
-  // ================= FETCH DATA =================
+  // ================= FETCH DATA (DENGAN FILTER STORE_ID) =================
   useEffect(() => {
     fetchInitialData();
   }, []);
 
   const fetchInitialData = async () => {
     try {
+      // 1. Ambil session user aktif & store_id
+      const { data: { user } } = await supabase.auth.getUser();
+      const activeStoreId = user?.user_metadata?.store_id || null;
+      
+      if (activeStoreId) {
+        setStoreId(activeStoreId);
+      }
+
+      // Buat helper query agar otomatis ter-filter store_id jika ada
+      const applyStoreFilter = (query: any) => activeStoreId ? query.eq('store_id', activeStoreId) : query;
+
       // Fetch Products
-      const { data: prodData } = await supabase
-        .from('products')
-        .select(`*, product_units(*)`)
-        .order('name');
+      const { data: prodData } = await applyStoreFilter(
+        supabase.from('products').select(`*, product_units(*)`)
+      ).order('name');
+      
       if (prodData) {
         setProducts(prodData);
         setFilteredProducts(prodData);
       }
 
       // Fetch Customers
-      const { data: custData } = await supabase.from('customers').select('*').order('name');
+      const { data: custData } = await applyStoreFilter(
+        supabase.from('customers').select('*')
+      ).order('name');
       if (custData) setCustomers(custData);
 
       // Fetch Store Accounts
-      const { data: accData } = await supabase.from('store_accounts').select('*');
+      const { data: accData } = await applyStoreFilter(
+        supabase.from('store_accounts').select('*')
+      );
       if (accData) {
         setStoreAccounts(accData);
         if (accData.length > 0) setSelectedAccountId(accData[0].id);
       }
 
       // Fetch Store Settings
-      const { data: settData } = await supabase.from('store_settings').select('*').single();
+      const { data: settData } = await applyStoreFilter(
+        supabase.from('store_settings').select('*')
+      ).maybeSingle();
       if (settData) setStoreSettings(settData);
+
     } catch (err) {
       console.error('Error fetching POS data:', err);
     }
@@ -266,7 +293,11 @@ export default function PosComponent() {
     try {
       const { data, error } = await supabase
         .from('customers')
-        .insert([{ name: newCustomerName, phone: newCustomerPhone }])
+        .insert([{ 
+          name: newCustomerName, 
+          phone: newCustomerPhone,
+          store_id: storeId // 👈 Ditambahkan store_id
+        }])
         .select()
         .single();
 
@@ -313,6 +344,7 @@ export default function PosComponent() {
         .from('sales')
         .insert([
           {
+            store_id: storeId, // 👈 Ditambahkan store_id
             invoice_number: invoiceNum,
             total_amount: grandTotal,
             paid_amount: paymentMethod === 'kasbon' ? 0 : paymentAmount,
@@ -365,7 +397,6 @@ export default function PosComponent() {
         items: [...cart],
         date: new Date().toLocaleString('id-ID'),
       });
-
       // Reset Form State
       setCart([]);
       setPaymentAmount(0);

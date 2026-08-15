@@ -14,9 +14,7 @@ import {
   AlertCircle,
   Phone,
   MapPin,
-  Loader2,
-  Sparkles,
-  ArrowRight
+  Loader2
 } from 'lucide-react'
 
 interface Customer {
@@ -63,25 +61,61 @@ export default function CustomersPage() {
     fetchCustomers()
   }, [])
 
+  // 1. Fetch data pelanggan yang hanya milik store_id user login
   const fetchCustomers = async () => {
     setLoading(true)
-    const { data } = await supabase
-      .from('customers')
-      .select('*')
-      .order('total_debt', { ascending: false })
-    if (data) setCustomers(data as Customer[])
-    setLoading(false)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('store_id')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!profile?.store_id) return
+
+      const { data } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('store_id', profile.store_id) // Filter Multi-Tenant
+        .order('total_debt', { ascending: false })
+
+      if (data) setCustomers(data as Customer[])
+    } catch (err) {
+      console.error('Gagal mengambil data pelanggan:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
+  // 2. Fetch riwayat cicilan/pelunasan utang
   const fetchPaymentHistory = async (customerId: string) => {
     setLoadingHistory(true)
-    const { data } = await supabase
-      .from('debt_payments')
-      .select('*')
-      .eq('customer_id', customerId)
-      .order('created_at', { ascending: false })
-    if (data) setPaymentHistory(data as DebtPayment[])
-    setLoadingHistory(false)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('store_id')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      const { data } = await supabase
+        .from('debt_payments')
+        .select('*')
+        .eq('customer_id', customerId)
+        .eq('store_id', profile?.store_id) // Filter Multi-Tenant
+        .order('created_at', { ascending: false })
+
+      if (data) setPaymentHistory(data as DebtPayment[])
+    } catch (err) {
+      console.error('Gagal mengambil riwayat pembayaran:', err)
+    } finally {
+      setLoadingHistory(false)
+    }
   }
 
   const handleSelectCustomer = (customer: Customer) => {
@@ -89,16 +123,34 @@ export default function CustomersPage() {
     fetchPaymentHistory(customer.id)
   }
 
-  // Tambah Pelanggan Baru
+  // 3. Tambah Pelanggan Baru dengan Inject store_id
   const handleAddCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Sesi tidak ditemukan')
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('store_id')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!profile?.store_id) throw new Error('Toko tidak terhubung')
+
       const { error } = await supabase.from('customers').insert([
-        { name, phone, address, user_id: user?.id, total_debt: 0 }
+        { 
+          store_id: profile.store_id, // Inject Store ID
+          user_id: user.id, 
+          name, 
+          phone, 
+          address, 
+          total_debt: 0 
+        }
       ])
+
       if (error) throw error
 
       setName('')
@@ -111,7 +163,7 @@ export default function CustomersPage() {
     }
   }
 
-  // Proses Pelunasan / Cicilan Utang
+  // 4. Proses Pelunasan / Cicilan Utang
   const handlePayDebt = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedCustomer || payAmount <= 0) return
@@ -122,26 +174,37 @@ export default function CustomersPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Sesi tidak ditemukan')
 
-      // 1. Simpan catatan pembayaran ke debt_payments
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('store_id')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!profile?.store_id) throw new Error('Toko tidak terhubung')
+
+      // Simpan catatan pembayaran ke debt_payments
       const { error: payErr } = await supabase.from('debt_payments').insert([
         {
+          store_id: profile.store_id, // Inject Store ID
           customer_id: selectedCustomer.id,
           amount_paid: payAmount,
           payment_method: payMethod,
           notes: payNotes,
-          user_id: user?.id
+          user_id: user.id
         }
       ])
 
       if (payErr) throw payErr
 
-      // 2. Update sisa utang pelanggan di tabel customers
+      // Update sisa utang pelanggan di tabel customers
       const newDebtBalance = Math.max(0, selectedCustomer.total_debt - payAmount)
       const { error: custErr } = await supabase
         .from('customers')
         .update({ total_debt: newDebtBalance })
         .eq('id', selectedCustomer.id)
+        .eq('store_id', profile.store_id) // Safeguard Multi-tenant
 
       if (custErr) throw custErr
 
@@ -359,7 +422,7 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        {/* ================= MODAL BAYAR UTANG ================= */}
+        {/* MODAL BAYAR UTANG */}
         {showPayModal && selectedCustomer && (
           <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
@@ -434,7 +497,7 @@ export default function CustomersPage() {
           </div>
         )}
 
-        {/* ================= MODAL TAMBAH PELANGGAN ================= */}
+        {/* MODAL TAMBAH PELANGGAN */}
         {showAddModal && (
           <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">

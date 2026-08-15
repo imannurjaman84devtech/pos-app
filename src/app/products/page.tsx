@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabaseClient'
 import { Product } from '@/types/pos'
 import { Html5QrcodeScanner } from 'html5-qrcode'
-import { 
-  Plus, 
-  Package, 
-  Barcode, 
-  Trash2, 
-  Camera, 
-  X, 
-  Loader2, 
+import {
+  Plus,
+  Package,
+  Barcode,
+  Trash2,
+  Camera,
+  X,
+  Loader2,
   Sparkles,
   Layers,
   Edit2,
@@ -50,7 +50,7 @@ export default function ProductsPage() {
   const [name, setName] = useState('')
   const [barcode, setBarcode] = useState('')
   const [initialStock, setInitialStock] = useState<number>(0)
-  
+
   const [units, setUnits] = useState<UnitInput[]>([
     { unit_name: 'Pcs', conversion_factor: 1, price: 5000, is_base_unit: true },
     { unit_name: 'Dus', conversion_factor: 24, price: 110000, is_base_unit: false }
@@ -61,12 +61,17 @@ export default function ProductsPage() {
   }, [])
 
   // Ref & Effect untuk Scanner Kamera HP
+  // Ref & Effect untuk Scanner Kamera HP (Versi Aman & Clean)
   useEffect(() => {
-    let scanner: Html5QrcodeScanner | null = null;
+    let isMounted = true;
+    let timerId: NodeJS.Timeout;
 
     if (isScannerOpen) {
-      setTimeout(() => {
-        scanner = new Html5QrcodeScanner(
+      timerId = setTimeout(() => {
+        // Cek apakah komponen/modal masih terbuka setelah 300ms
+        if (!isMounted) return;
+
+        const scanner = new Html5QrcodeScanner(
           "reader",
           { fps: 10, qrbox: { width: 250, height: 150 } },
           false
@@ -83,17 +88,25 @@ export default function ProductsPage() {
 
             setBarcode(decodedText);
             setIsScannerOpen(false);
-            if (scanner) scanner.clear();
+
+            // Hentikan scanner setelah berhasil scan
+            scanner.clear().catch(err => console.error("Error clearing scanner on success", err));
           },
-          (errorMessage) => {}
+          (errorMessage) => {
+            // Abaikan error per-frame scan biasa
+          }
         );
+
+        // Jika komponen ditutup saat scanner sudah aktif, bersihkan scanner-nya
+        return () => {
+          scanner.clear().catch(err => console.error("Failed to clear scanner", err));
+        };
       }, 300);
     }
 
     return () => {
-      if (scanner) {
-        scanner.clear().catch(err => console.error("Failed to clear scanner", err));
-      }
+      isMounted = false;
+      if (timerId) clearTimeout(timerId);
     };
   }, [isScannerOpen]);
 
@@ -129,27 +142,34 @@ export default function ProductsPage() {
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // 1. Validasi Input
     if (!name.trim()) return alert('Nama produk wajib diisi!')
     if (units.length === 0) return alert('Produk harus memiliki minimal 1 satuan!')
+
+    const hasEmptyUnitName = units.some(u => !u.unit_name.trim())
+    if (hasEmptyUnitName) return alert('Semua nama satuan wajib diisi!')
 
     setSubmitting(true)
 
     try {
+      // 2. Insert Data Produk Utama
       const { data: newProd, error: prodErr } = await supabase
         .from('products')
-        .insert([{ 
-          name, 
-          barcode: barcode.trim() || null, 
-          stock_in_base_unit: initialStock 
+        .insert([{
+          name,
+          barcode: barcode.trim() || null,
+          stock_in_base_unit: initialStock
         }])
         .select()
         .single()
 
       if (prodErr) throw prodErr
 
+      // 3. Prepare & Insert Data Units
       const unitPayloads = units.map(u => ({
         product_id: newProd.id,
-        unit_name: u.unit_name,
+        unit_name: u.unit_name.trim(),
         conversion_factor: Number(u.conversion_factor),
         price: Number(u.price),
         is_base_unit: u.is_base_unit
@@ -161,7 +181,7 @@ export default function ProductsPage() {
 
       if (unitErr) throw unitErr
 
-      // Reset Form & Close Modal
+      // 4. Reset Form & Close Modal
       setName('')
       setBarcode('')
       setInitialStock(0)
@@ -185,8 +205,8 @@ export default function ProductsPage() {
 
     setSubmitting(true)
     const currentStock = stockModalProd.stock_in_base_unit
-    const newStock = adjustType === 'add' 
-      ? currentStock + adjustAmount 
+    const newStock = adjustType === 'add'
+      ? currentStock + adjustAmount
       : Math.max(0, currentStock - adjustAmount)
 
     try {
@@ -224,7 +244,7 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 md:p-10 font-sans relative">
-      
+
       {/* Glow Backdrops */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[140px]" />
@@ -232,7 +252,7 @@ export default function ProductsPage() {
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto space-y-6">
-        
+
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/70 border border-slate-800/80 backdrop-blur-2xl p-6 rounded-3xl shadow-xl shadow-cyan-950/10">
           <div className="flex items-start gap-4">
@@ -325,13 +345,12 @@ export default function ProductsPage() {
                         <td className="p-4">
                           <div className="flex flex-wrap gap-2">
                             {p.product_units?.map(u => (
-                              <div 
-                                key={u.id} 
-                                className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
-                                  u.is_base_unit 
-                                    ? 'bg-cyan-950/30 border-cyan-500/30 text-cyan-300' 
+                              <div
+                                key={u.id}
+                                className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${u.is_base_unit
+                                    ? 'bg-cyan-950/30 border-cyan-500/30 text-cyan-300'
                                     : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
-                                }`}
+                                  }`}
                               >
                                 <span className="font-semibold">{u.unit_name}</span>
                                 <span className="text-slate-600 mx-1.5">|</span>
@@ -381,7 +400,7 @@ export default function ProductsPage() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 transition-all">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
-            
+
             <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
@@ -392,8 +411,8 @@ export default function ProductsPage() {
                   <p className="text-xs text-slate-400">Lengkapi rincian informasi item dan variasi harganya</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setIsModalOpen(false)} 
+              <button
+                onClick={() => setIsModalOpen(false)}
                 className="p-2 text-slate-400 hover:text-slate-200 rounded-xl hover:bg-slate-800 transition"
               >
                 <X className="w-5 h-5" />
@@ -552,7 +571,7 @@ export default function ProductsPage() {
                 <SlidersHorizontal className="w-4 h-4 text-cyan-400" />
                 Penyesuaian Stok
               </h3>
-              <button 
+              <button
                 onClick={() => setStockModalProd(null)}
                 className="p-1 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800"
               >
@@ -568,11 +587,10 @@ export default function ProductsPage() {
                 <button
                   type="button"
                   onClick={() => setAdjustType('add')}
-                  className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border transition ${
-                    adjustType === 'add' 
-                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400' 
+                  className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border transition ${adjustType === 'add'
+                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400'
                       : 'bg-slate-950 border-slate-800 text-slate-400'
-                  }`}
+                    }`}
                 >
                   <PlusCircle className="w-4 h-4" />
                   <span>Stok Masuk</span>
@@ -581,11 +599,10 @@ export default function ProductsPage() {
                 <button
                   type="button"
                   onClick={() => setAdjustType('reduce')}
-                  className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border transition ${
-                    adjustType === 'reduce' 
-                      ? 'bg-rose-500/10 border-rose-500/40 text-rose-400' 
+                  className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border transition ${adjustType === 'reduce'
+                      ? 'bg-rose-500/10 border-rose-500/40 text-rose-400'
                       : 'bg-slate-950 border-slate-800 text-slate-400'
-                  }`}
+                    }`}
                 >
                   <MinusCircle className="w-4 h-4" />
                   <span>Stok Keluar</span>
@@ -627,10 +644,10 @@ export default function ProductsPage() {
             >
               <X className="w-5 h-5" />
             </button>
-            
+
             <h3 className="font-bold text-slate-200 text-base mb-1">Arahkan ke Barcode</h3>
             <p className="text-xs text-slate-400 mb-4">Posisikan kode batang di tengah kotak kamera</p>
-            
+
             <div id="reader" className="overflow-hidden rounded-2xl border-2 border-cyan-500/80 bg-slate-950"></div>
 
             <p className="text-[11px] text-slate-500 mt-4">Pindaian akan memicu bunyi bip dan otomatis mengisi kolom barcode.</p>

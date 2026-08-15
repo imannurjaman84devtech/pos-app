@@ -48,6 +48,7 @@ export default function Sidebar() {
         const { data: { user } } = await supabase.auth.getUser()
 
         if (user) {
+          // A. Set Nama User
           const displayName =
             user.user_metadata?.full_name ||
             user.user_metadata?.name ||
@@ -56,32 +57,41 @@ export default function Sidebar() {
 
           setUserName(displayName)
 
-          const metaStore = user.user_metadata?.store_name || user.user_metadata?.nama_toko
-          const metaRole = user.user_metadata?.role
+          // B. Ambil store_id & role dari tabel profiles
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role, store_id')
+            .eq('id', user.id)
+            .maybeSingle()
 
-          if (metaStore) {
-            setStoreName(metaStore)
-            setUserRole(metaRole || 'Admin Toko')
-          } else {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('role, stores(name)')
-              .eq('id', user.id)
-              .maybeSingle()
+          if (profile) {
+            setUserRole(profile.role || 'Kasir')
 
-            if (profile) {
-              setUserRole(profile.role || 'Kasir')
-              const storeData = profile.stores as any
-              setStoreName(storeData?.name || 'RUMAH BENTANG')
+            // C. Jika store_id ditemukan, ambil Nama Toko Asli dari client_stores
+            if (profile.store_id) {
+              const { data: storeData } = await supabase
+                .from('client_stores') // Mengambil dari tabel client_stores kamu
+                .select('store_name, name') // Menangani jika nama kolom 'store_name' atau 'name'
+                .eq('id', profile.store_id)
+                .single()
+
+              if (storeData) {
+                // Gunakan nama toko dari database
+                setStoreName(storeData.store_name || storeData.name || 'Toko Tanpa Nama')
+              } else {
+                setStoreName('Toko Tidak Ditemukan')
+              }
             } else {
-              setStoreName('RUMAH BENTANG')
-              setUserRole('Kasir Utama')
+              setStoreName('Belum Ada Toko')
             }
+          } else {
+            setUserRole('Kasir Utama')
+            setStoreName('Profil Belum Disetup')
           }
         }
       } catch (err) {
         console.error('Gagal memuat profil sidebar:', err)
-        setStoreName('RUMAH BENTANG')
+        setStoreName('Gagal Memuat Toko')
         setUserName('Kasir Utama')
         setUserRole('Shift Pagi')
       } finally {
@@ -120,7 +130,7 @@ export default function Sidebar() {
           </div>
           <div>
             <h2 className="font-black text-white text-xs tracking-wider uppercase">GROSIR POS</h2>
-            <p className="text-[10px] text-indigo-300/80 truncate max-w-[150px] font-medium">{storeName || 'RUMAH BENTANG'}</p>
+            <p className="text-[10px] text-indigo-300/80 truncate max-w-[150px] font-medium">{loading ? 'Memuat...' : storeName}</p>
           </div>
         </div>
 
@@ -209,7 +219,7 @@ export default function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setIsOpen(false)} // LANGSUNG TUTUP SETELAH DI-KLIK
+                  onClick={() => setIsOpen(false)}
                   className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 group relative overflow-hidden touch-manipulation select-none active:scale-98 ${isActive
                       ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/30 border border-indigo-400/30'
                       : 'text-slate-400 hover:text-slate-100 hover:bg-[#111638]/50 active:bg-[#111638] border border-transparent'
